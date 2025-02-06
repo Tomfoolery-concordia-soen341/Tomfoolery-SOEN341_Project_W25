@@ -1,14 +1,21 @@
-# React + Vite
+# Introduction
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to Team TomFoolery's github repository for ChatHaven.
 
-Currently, two official plugins are available:
+ChatHaven is a communication platform for users to send messages either directly to other users or through a text channel. The users can send messages and share various media files to others. It is maintained by various roles in the system such that each text channel is maintained and well managed for the best user experience.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-# React Video  
-https://youtu.be/SqcY0GlETPk?si=cwDUOQclaf0i8SCS  
-# React + Firebase 
-https://youtu.be/PKwu15ldZ7k?si=2_MJvRU6JJQVLIWg  
-# Useful Github Repository   
-https://github.com/WebDevSimplified/React-Firebase-Auth  
+# Team member list
+
+- Jeff Zhong
+- Navraj Jhajj
+- Ming-Hung Kao
+- Gilbert Sedillo
+- Tung Lam Ha
+
+# Technology and tools used
+
+- React
+- JavaScript
+- CSS
+- HTML
+- FireBase
