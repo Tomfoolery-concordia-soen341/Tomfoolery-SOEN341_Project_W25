@@ -3,20 +3,7 @@ import { auth } from "../config/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom"; //import functions
-import { database } from "../config/firebase";
-import { getDoc, setDoc, doc, collection } from "firebase/firestore";
-
-//this function takes a user object in
-export async function checkAdmin(user) {
-
-  //finds the user in the firestore
-  const userRef = await doc(database, "users", user.uid);
-
-  //snapshot of the specific user
-  const specificUser = await getDoc(userRef);
-
-  //this var allows us to pick the field in the specific user
-  const field = specificUser.data();
+import { isAdmin } from "./Login";
 
   console.log(field.admin);
 
