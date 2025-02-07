@@ -52,6 +52,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  //revert isAdmin to false when this page shows
+  isAdmin = false;
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
