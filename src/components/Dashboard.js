@@ -1,12 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { auth, db } from "../config/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom"; //import functions
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Box, Typography, Button, Divider, TextField, IconButton } from "@mui/material";
 import { Settings, Info, Dashboard as DashboardIcon, ExitToApp, Send } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ user, logout }) => {
-  const navigate = useNavigate(); // Hook for navigation
+const Dashboard = () => {
+  const [user] = useAuthState(auth);
+  const [role, setRole] = useState("");
+  const navigate = useNavigate(); //initialize function from import
+  const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]); // State for messages
-  const [input, setInput] = useState(""); // State for input field
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      //go to login page. it's just / because it's on http://localhost:3000/ and not http://localhost:3000/login
+      //change this if you are going to make a login page later.
+      navigate("/");
+    } catch (err) {
+      //error catching
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setRole(userData.role);
+        }
+      }
+    };
+
+    fetchUserRole();
+  }, [user]);
+
+// const Sidebar = ({ user, logout }) => {
+//   const navigate = useNavigate(); // Hook for navigation
+//   const [messages, setMessages] = useState([]); // State for messages
+   // State for input field
 
   const menuItems = [
     { text: "Settings", icon: <Settings />, path: "/settings" },
@@ -19,7 +56,6 @@ const Sidebar = ({ user, logout }) => {
       setInput(""); // Clear input after sending
     }
   };
-
   return (
     <Box sx={{ flexGrow: 1, display: "flex", height: "100vh" }}> {/* Full height sidebar */}
       <Drawer
@@ -72,7 +108,10 @@ const Sidebar = ({ user, logout }) => {
             <>
               <Typography variant="body2">Logged in as:</Typography>
               <Typography variant="body1" sx={{ fontWeight: "bold" }}>{user.email}</Typography>
+              <Typography variant="body2">Your Role:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: "bold" }}>{role}</Typography>
             </>
+            
           ) : (
             <Typography variant="body2">Not logged in</Typography>
           )}
@@ -90,9 +129,9 @@ const Sidebar = ({ user, logout }) => {
       </Drawer>
 
       {/* Main Chat Content */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 2, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         {/* Chat Messages */}
-        <Box sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 2 }}>
+        <Box sx={{ flexGrow: 1, overflowY: "auto", mb: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 2, top: 0 }}>
           {messages.length > 0 ? (
             messages.map((msg, index) => (
               <Box key={index} sx={{ flexGrow: 1, mb: 1, p: 1, bgcolor: msg.sender === user?.email ? "#2196F3" : "#e0e0e0", color: msg.sender === user?.email ? "white" : "black", borderRadius: 2, maxWidth: "60%", alignSelf: msg.sender === user?.email ? "flex-end" : "flex-start" }}>
@@ -106,7 +145,21 @@ const Sidebar = ({ user, logout }) => {
         </Box>
 
         {/* Chat Input Field */}
-        <Box sx={{ flexGrow: 1,  p: 3,  display: "flex",  alignItems: "center", gap: 1 }}>
+        <Box 
+          sx={{
+            position: "fixed", // Fixes the position at the bottom
+            bottom: 0, // Sticks it to the bottom
+            right: 0, // Ensures it spans the full width
+            width: "82%", // Full width
+            height: "60px", // Set a fixed height (adjust as needed)
+            backgroundColor: "white", // Optional: Set a background color
+            display: "flex", // Enables flex properties
+            alignItems: "center", // Centers items vertically
+            gap: 1,
+            padding: 2,
+            borderTop: "1px solid #ccc", // Optional: Adds a border at the top
+          }}
+        >
           <TextField 
             fullWidth 
             variant="outlined" 
@@ -121,7 +174,7 @@ const Sidebar = ({ user, logout }) => {
         </Box>
       </Box>
     </Box>
-  );
+   );
 };
 
-export default Sidebar;
+export default Dashboard;

@@ -7,9 +7,6 @@ import "./Style.css";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [RegisterEmail, setRegisterEmail] = useState("");
-  const [RegisterPassword, setRegisterPassword] = useState("");
-  const [role, setRole] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -21,14 +18,8 @@ const Login = () => {
       alert(error.message);
     }
   };
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password, role);
-      navigate("/dashboard"); // Redirect to dashboard after login
-    } catch (error) {
-      alert(error.message);
-    }
+  const GoToRegister = () => {
+    navigate("/Register");
   };
 
   return (
@@ -63,50 +54,11 @@ const Login = () => {
               Login
             </button>
           </form>
-          <hr className="my-4" />
-
-          <h1 className="Register">Register</h1>
-          <form onSubmit={handleRegister} className="FormRegister">
-            <div>
-              <label className="Email">Email</label>
-              <input
-                className="InputEmail"
-                type="email"
-                placeholder="Email"
-                value={RegisterEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="Password">Password</label>
-              <input
-                className="InputPassword"
-                type="password"
-                placeholder="Password"
-                value={RegisterPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="Role">Role</label>
-              <select
-                className="RoleSelect"
-                // w-full p-2 border border-gray-300 rounded-lg
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
-                <option value="">Select a role</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-            </div>
-            <button type="submit" className="RegisterButton">
-              Register
-            </button>
-          </form>
+          <h1 onClick={GoToRegister} className="GoToRegister">
+            Create an account ?
+            <span className="material-symbols-outlined">arrow_forward</span>
+            <h1 className="RegisterHere">Register here</h1>
+          </h1>
         </div>
       </div>
     </div>

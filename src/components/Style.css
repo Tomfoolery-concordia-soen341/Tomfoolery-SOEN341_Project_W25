@@ -107,3 +107,37 @@
   .RegisterButton:hover{
     background-color: #16a34a; /* Darker green on hover */
   }
+  .GoToRegister{
+    display:inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 15px;
+    /*text-decoration: underline;*/
+    color: #111211;
+    cursor:default;
+  }
+ 
+  .GoToLogin{
+    font-size: 15px;
+    text-decoration: underline;
+    color: #171917;
+    cursor:default;
+  }
+  .GoToLogin:hover{
+    color: #e42c38;
+  }
+  .material-symbols-outlined{
+    font-size: 20px; /* Adjust the icon size */
+  vertical-align: middle; /* Ensure vertical alignment */
+  color: #121312; /* Optional: Icon color */
+    
+  }
+  .RegisterHere{
+    font-size: 15px;
+    text-decoration: underline;
+    color: #399c48;
+    cursor:default;
+  }
+  .RegisterHere:hover{
+    color: #e42c38;
+  }
