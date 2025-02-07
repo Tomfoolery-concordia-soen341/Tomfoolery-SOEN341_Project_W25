@@ -3,6 +3,9 @@ import { auth } from "../config/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom"; //import functions
+import Box from '@mui/material/Box';
+import VerticalTabs from './Sidebar';
+import Tab from '@mui/material/Box';
 
 const Dashboard = () => {
   const [user] = useAuthState(auth);
@@ -22,11 +25,19 @@ const Dashboard = () => {
 
   //what you see in the page
   return (
-    <div>
-      <h1>Dashboard</h1>
-      {user ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>} 
-      <button onClick={logout}>Log Out</button>
-    </div>
+    <Box>
+      <Tab label="Dashboard" />
+      <VerticalTabs/> 
+    </Box>
+    // <div className="dashboard-container">
+    //   <div className="content-container">
+    //     <VerticalTabs/>
+    //     
+        
+    //   {user ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>} 
+    //   <button onClick={logout}>Log Out</button> 
+    //   </div>
+    // </div>
   );
 };
 
