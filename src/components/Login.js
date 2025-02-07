@@ -59,6 +59,7 @@ const Login = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      await checkAdmin(auth.currentUser).then(result => isAdmin = result);
       navigate("/dashboard"); // Redirect to dashboard after login
     } catch (error) {
       alert(error.message);
