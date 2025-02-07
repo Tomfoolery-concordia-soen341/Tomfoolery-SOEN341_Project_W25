@@ -19,8 +19,6 @@ export async function checkAdmin(user) {
   //this var allows us to pick the field in the specific user
   const field = specificUser.data();
 
-  console.log(field.admin);
-
   //check if the user exists
   if (specificUser.exists()) {
 
