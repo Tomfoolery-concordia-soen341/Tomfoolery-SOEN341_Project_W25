@@ -26,7 +26,8 @@ const Dashboard = () => {
   return (
     <div>
       <h1>Dashboard</h1>
-      {user ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>} 
+      {user ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>}
+      {user && isAdmin ? <p>You are an admin</p> : <p>You are not an admin</p>}
       <button onClick={logout}>Log Out</button>
     </div>
   );
