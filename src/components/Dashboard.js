@@ -24,10 +24,11 @@ import {
     Send,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { isAdmin } from "./Login";
 
 const Sidebar = () => {
     const [user] = useAuthState(auth);
-    const [role, setRole] = useState("");
+    const role = isAdmin? "admin" : "user";
     const [channels, setChannels] = useState([]); // State for channels
     const [activeChannel, setActiveChannel] = useState(null); // State for active channel
     const [channelMessages, setChannelMessages] = useState([]); // State for channel messages
@@ -37,7 +38,7 @@ const Sidebar = () => {
     const navigate = useNavigate();
 
     // Fetch user role and channels on component mount
-    useEffect(() => {
+    /*useEffect(() => {
         const fetchUserRole = async () => {
             if (user) {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -59,7 +60,7 @@ const Sidebar = () => {
 
         fetchUserRole();
         fetchChannels();
-    }, [user]);
+    }, [user]);*/
 
     // Fetch messages for the active channel
     useEffect(() => {
