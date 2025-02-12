@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { database } from "../config/firebase";
+import "./Style.css";
+import { db } from "../config/firebase";
 import { getDoc, setDoc, doc, collection } from "firebase/firestore";
 
 export let isAdmin = false;
@@ -11,7 +12,7 @@ export let isAdmin = false;
 export async function checkAdmin(user) {
 
   //finds the user in the firestore
-  const userRef = await doc(database, "users", user.uid);
+  const userRef = await doc(db, "users", user.uid);
 
   //snapshot of the specific user
   const specificUser = await getDoc(userRef);
@@ -33,7 +34,7 @@ export async function checkAdmin(user) {
   } else {
 
     //get the location of where the user documents data are stored
-    const userRefForNew = collection(database, "users");
+    const userRefForNew = collection(db, "users");
 
     //create a new doc with the uid as the name and set the admin to false
     await setDoc(doc(userRefForNew, user.uid), {
@@ -63,25 +64,49 @@ const Login = () => {
       alert(error.message);
     }
   };
+  const GoToRegister = () => {
+    navigate("/Register");
+  };
 
   return (
-    <div>
-      <h1>Login</h1>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Login</button>
-      </form>
+    <div className="OuterContainer">
+      <div className="FormContainer">
+        <div>
+          <h1 className="Login">Login</h1>
+          <form onSubmit={handleLogin} className="FormSubmit">
+            <div>
+              <label className="Email">Email</label>
+              <input
+                className="InputEmail"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="Password">Password</label>
+              <input
+                className="InputPassword"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="LoginButton">
+              Login
+            </button>
+          </form>
+          <h1 onClick={GoToRegister} className="GoToRegister">
+            Create an account ?
+            <span className="material-symbols-outlined">arrow_forward</span>
+            <h1 className="RegisterHere">Register here</h1>
+          </h1>
+        </div>
+      </div>
     </div>
   );
 };
