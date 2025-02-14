@@ -6,6 +6,47 @@
   height: 40vmin;
   pointer-events: none;
 }
+:root {
+  --family-sans-serif: "Roboto", sans-serif;
+  --family-secondary: "Montserrat", sans-serif;
+}
+
+.is-family-sans-serif {
+  font-family: "Roboto", sans-serif !important;
+}
+
+.is-family-montserrat {
+  font-family: "Montserrat", sans-serif !important;
+}
+
+/* Custom styles for white boxes */
+.custom-box {
+  background-color: white !important; /* Force white background */
+  color: #000000; /* Ensure text is readable */
+  border: 1px solid #e0e0e0; /* Add a subtle border */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a light shadow */
+}
+
+/* Ensure inputs and buttons look good on white background */
+.custom-box .input,
+.custom-box .button {
+  background-color: #f5f5f5; /* Light gray background for inputs */
+  border-color: #e0e0e0; /* Subtle border color */
+  color: #000000; /* Black text */
+}
+
+.custom-box .input::placeholder {
+  color: #888; /* Placeholder text color */
+}
+
+.custom-box .button.is-primary {
+  background-color: #3273dc; /* Bulma's primary color */
+  color: white; /* White text for primary button */
+}
+
+.custom-box .button.is-primary:hover {
+  background-color: #276cda; /* Slightly darker on hover */
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
