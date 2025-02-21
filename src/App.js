@@ -5,25 +5,18 @@ import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./components/Register";
 import LoginPage from "./components/LoginTest";
-function App() {
+import ChatApp from "./components/Channel";
+
+const App = () => {
   return (
-    <LoginPage/>
-    // <Router>
-    //   <Routes>
-    //     <Route path="/" element={<Login />} />
-    //     <Route path="/register" element={<Register />} />
-    //     <Route path="/Login" element={<Login />} />
-    //     <Route
-    //       path="/dashboard"
-    //       element={
-    //         <ProtectedRoute>
-    //           <Dashboard />
-    //         </ProtectedRoute>
-    //       }
-    //     />
-    //   </Routes>
-    // </Router>
+    <Router>
+      <Routes>
+        <Route path="/LoginTest" element={<LoginPage />} />
+        <Route path="/Channel" element={<ChatApp />} />
+        <Route path="/" element={<LoginPage />} /> {/* Default route */}
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;

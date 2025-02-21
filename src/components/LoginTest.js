@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
-import 'bulma/css/bulma.min.css';
-import './Style.css'; // Import your custom CSS for additional styling
+import React, { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../config/firebase"; // Adjust the path to your Firebase config
+import { useNavigate } from "react-router-dom";
+import "bulma/css/bulma.min.css";
+import "./Style.css"; // Import your custom CSS for additional styling
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Email:', email);
-    console.log('Password:', password);
-    console.log('Remember Me:', rememberMe);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/Channel"); // Redirect to the channels page after successful login
+    } catch (error) {
+      alert(error.message); // Display error message if login fails
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // Add Google login functionality here if needed
+    alert("Google login not implemented yet.");
   };
 
   return (
@@ -24,9 +35,11 @@ const LoginPage = () => {
               <div className="box custom-box">
                 <h1 className="title has-text-centered">Welcome back</h1>
                 <p className="subtitle has-text-centered">Please enter your details</p>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleLogin}>
                   <div className="field">
-                    <label htmlFor="email" className="label">Email address</label>
+                    <label htmlFor="email" className="label">
+                      Email address
+                    </label>
                     <div className="control">
                       <input
                         type="email"
@@ -40,7 +53,9 @@ const LoginPage = () => {
                     </div>
                   </div>
                   <div className="field">
-                    <label htmlFor="password" className="label">Password</label>
+                    <label htmlFor="password" className="label">
+                      Password
+                    </label>
                     <div className="control">
                       <input
                         type="password"
@@ -60,7 +75,7 @@ const LoginPage = () => {
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
                       />
-                      {' '}Remember for 30 days
+                      {" "}Remember for 30 days
                     </label>
                   </div>
                   <div className="field">
@@ -69,7 +84,11 @@ const LoginPage = () => {
                     </button>
                   </div>
                   <div className="field">
-                    <button type="button" className="button is-fullwidth">
+                    <button
+                      type="button"
+                      className="button is-fullwidth"
+                      onClick={handleGoogleLogin}
+                    >
                       <span className="icon">
                         <img src="https://www.google.com/favicon.ico" alt="Google" />
                       </span>
