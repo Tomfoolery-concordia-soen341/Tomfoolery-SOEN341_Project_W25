@@ -98,22 +98,7 @@ const Sidebar = () => {
     };
 
     // Fetch messages for the active channel
-    useEffect(() => {
-        const fetchMessages = async () => {
-            if (activeChannel) {
-                const messagesSnapshot = await getDocs(
-                    collection(db, "channels", activeChannel, "messages")
-                );
-                const messagesList = messagesSnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setChannelMessages(messagesList);
-            }
-        };
-
-        fetchMessages();
-    }, [activeChannel]);
+    useEffect(() => {fetchMessages()}, [activeChannel]);
 
     // Create a new channel
     const createChannel = async () => {
