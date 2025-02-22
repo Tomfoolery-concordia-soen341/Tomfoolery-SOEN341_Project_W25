@@ -192,7 +192,7 @@ const Sidebar = () => {
                                     "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.1)" },
                                 }}
                             >
-                                <ListItemText primary={channel.name} />
+                                <ListItemText primary={channel.data().name} />
                             </ListItem>
                         ))}
                     </List>
