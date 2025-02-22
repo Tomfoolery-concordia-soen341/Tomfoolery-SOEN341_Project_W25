@@ -85,7 +85,8 @@ const Sidebar = () => {
     };
 
     // Fetch messages for the active channel
-    useEffect(() => {fetchMessages().then()}, [activeChannel]);
+    //No deps for the useEffect since messages need to be constantly updated
+    useEffect(() => {fetchMessages().then()});
 
     // Create a new channel
     const createChannel = async () => {
