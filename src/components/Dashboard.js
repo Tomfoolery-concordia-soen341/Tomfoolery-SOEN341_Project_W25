@@ -106,6 +106,7 @@ const Sidebar = () => {
             try {
                 await addDoc(collection(db, "channels"), {
                     name: newChannelName,
+                    members: [user.email],
                     createdBy: user.uid,
                     createdAt: serverTimestamp(),
                 });
