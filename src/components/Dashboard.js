@@ -51,13 +51,13 @@ const Sidebar = () => {
             const field = channel.data();
 
             //make sure there is a members field
-            if (field.members != undefined) {
+            if (field.members !== undefined) {
 
                 //check each member in the field
                 field.members.forEach((member) => {
 
                     //if the member is equal to the user's email, add this to array
-                    if (member == user.email){
+                    if (member === user.email){
                         accessibleChannels.push(channel);
                     }
                 })
@@ -69,7 +69,7 @@ const Sidebar = () => {
 
     //function call fetchChannels is in a useEffect since it should be run only once
     //updates every time page is updated run
-    useEffect(() => {fetchChannels()},[])
+    useEffect(() => {fetchChannels().then()},[])
     //console.log(channels);
 
     const fetchMessages = async () => {
@@ -85,7 +85,7 @@ const Sidebar = () => {
     };
 
     // Fetch messages for the active channel
-    useEffect(() => {fetchMessages()}, [activeChannel]);
+    useEffect(() => {fetchMessages().then()}, [activeChannel]);
 
     // Create a new channel
     const createChannel = async () => {
@@ -103,7 +103,7 @@ const Sidebar = () => {
                 console.error("Error creating channel:", error);
             }
         }
-        fetchChannels();
+        await fetchChannels();
     };
 
     // Send a message to the active channel
@@ -121,7 +121,7 @@ const Sidebar = () => {
                 console.error("Error sending message:", error);
             }
         }
-        fetchMessages();
+        await fetchMessages();
     };
 
     // Logout
