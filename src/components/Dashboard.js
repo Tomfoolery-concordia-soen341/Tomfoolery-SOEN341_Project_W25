@@ -49,14 +49,36 @@ const Sidebar = () => {
             }
         };
 
-        const fetchChannels = async () => {
-            const channelsSnapshot = await getDocs(collection(db, "channels"));
-            const channelsList = channelsSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setChannels(channelsList);
-        };
+    const fetchChannels = async () => {
+
+        //create a temp array holding all accessible channels
+        let accessibleChannels = [];
+
+        //get all channels from database
+        const allChannels = await getDocs(collection(db, "channels"));
+
+        //loop through each channel in database
+        allChannels.forEach((channel) => {
+
+            //get the data of this channel
+            const field = channel.data();
+
+            //make sure there is a members field
+            if (field.members != undefined) {
+
+                //check each member in the field
+                field.members.forEach((member) => {
+
+                    //if the member is equal to the user's email, add this to array
+                    if (member == user.email){
+                        accessibleChannels.push(channel);
+                    }
+                })
+            }
+        })
+        //if accessibleChannels has been changed set channels to this
+        if (accessibleChannels.length !== 0) setChannels(accessibleChannels);
+    }
 
         fetchUserRole();
         fetchChannels();
