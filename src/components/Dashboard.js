@@ -134,6 +134,7 @@ const Sidebar = () => {
                 console.error("Error sending message:", error);
             }
         }
+        fetchMessages();
     };
 
     // Logout
