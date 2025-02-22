@@ -36,19 +36,6 @@ const Sidebar = () => {
     const [isCreatingChannel, setIsCreatingChannel] = useState(false); // State for channel creation UI
     const [input, setInput] = useState(""); // State for input field
     const navigate = useNavigate();
-
-    // Fetch user role and channels on component mount
-    /*useEffect(() => {
-        const fetchUserRole = async () => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setRole(userData.role);
-                }
-            }
-        };
-
     const fetchChannels = async () => {
 
         //create a temp array holding all accessible channels
