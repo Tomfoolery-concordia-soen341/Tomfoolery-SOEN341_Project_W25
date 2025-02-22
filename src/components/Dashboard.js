@@ -80,9 +80,22 @@ const Sidebar = () => {
         if (accessibleChannels.length !== 0) setChannels(accessibleChannels);
     }
 
-        fetchUserRole();
-        fetchChannels();
-    }, [user]);*/
+    //function call fetchChannels is in a useEffect since it should be run only once
+    //updates every time page is updated run
+    useEffect(() => {fetchChannels()},[])
+    //console.log(channels);
+
+    const fetchMessages = async () => {
+        if (activeChannel) {
+            const q = query(collection(db, "channels", activeChannel, "messages"), orderBy("timestamp", "asc"))
+            const messagesSnapshot = await getDocs(q);
+            const messagesList = messagesSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setChannelMessages(messagesList);
+        }
+    };
 
     // Fetch messages for the active channel
     useEffect(() => {
