@@ -116,6 +116,7 @@ const Sidebar = () => {
                 console.error("Error creating channel:", error);
             }
         }
+        fetchChannels();
     };
 
     // Send a message to the active channel
