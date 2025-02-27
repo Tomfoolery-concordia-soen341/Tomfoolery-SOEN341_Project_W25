@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { deleteDoc } from "firebase/firestore"; 
+import { getDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import { signOut } from "firebase/auth";
 import {
@@ -64,6 +66,40 @@ const AdminDash = () => {
     fetchChannels();
   }, []);
 
+  const DeleteChannel = async function (channel) {
+
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+
+    if (!userSnap.exists() || !userSnap.data().isAdmin) {
+      alert("You do not have permission to delete this channel");
+      return;
+    }
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this channel?");
+    if (confirmDelete)
+      return;
+
+    const channelRef = collection(db, "channels");
+    const q = query(channelRef, where("id", "==", channel));
+
+    try {
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        alert("Channel not found");
+        return;
+      }
+
+      const channelDoc = querySnapshot.docs[0];
+      await deleteDoc(doc(db, "channels", channelDoc.id));
+      setChannels(channels.filter((c) => c.id !== channelDoc.id));
+
+    } catch (error) {
+      console.error("Error deleting channel", error);
+    }
+  }
+
   return (
     <div>
       <h1>Admin Dashboard</h1>
@@ -77,8 +113,9 @@ const AdminDash = () => {
             <li
               key={channel.id}
               className="Channel"
-              onClick={() => GoToChannel(channel)}
-            >
+              onClick={() => GoToChannel(channel)
+              }>
+             <button onClick={() => DeleteChannel(channel.id)}>Delete</button> 
               {channel.name}
             </li>
           ))}
