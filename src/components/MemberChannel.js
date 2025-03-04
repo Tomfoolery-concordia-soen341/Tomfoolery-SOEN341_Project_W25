@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
-import {
-  doc,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-  collection,
-  getDocs,
-  addDoc,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db, auth } from "../config/firebase"; // Import Firestore & Auth
+import {doc, getDoc, collection, addDoc, orderBy, onSnapshot, serverTimestamp, getDocs,} from "firebase/firestore";
+import { db, auth } from "../config/firebase";
+import {useLocation, useNavigate} from "react-router-dom"; // Import Firestore & Auth
 
-const MemberChannel = ({ channel, onClose }) => {
+const MemberChannel = () => {
   const [members, setMembers] = useState([]); 
   const [messages, setMessages] = useState([]); 
-  const [newMessage, setNewMessage] = useState(""); 
+  const [newMessage, setNewMessage] = useState("");
+  const { state } = useLocation();
+  const { channel } = state;
+  const [allUsers, setAllUsers] = useState([]); // List of all users
+  const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchChannelData();
     listenForMessages();
+    fetchUsers();
+    fetchChannelData();
   }, []);
 
   // Fetch channel members
@@ -30,6 +27,17 @@ const MemberChannel = ({ channel, onClose }) => {
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
     }
+  };
+
+  // Fetch all users
+  const fetchUsers = async () => {
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    const users = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setAllUsers(users);
   };
 
   // Listen for chat messages
@@ -54,6 +62,10 @@ const MemberChannel = ({ channel, onClose }) => {
     });
 
     setNewMessage(""); // Clear input after sending
+  };
+
+  const BackToDashboard = () => {
+    navigate("/Member");
   };
 
   return (
@@ -86,8 +98,7 @@ const MemberChannel = ({ channel, onClose }) => {
         />
         <button onClick={sendMessage}>Send</button>
       </div>
-
-      <button onClick={onClose}>Return to Channel List</button>
+      <button onClick={BackToDashboard}>Go back to Dashboard</button>
     </div>
   );
 };

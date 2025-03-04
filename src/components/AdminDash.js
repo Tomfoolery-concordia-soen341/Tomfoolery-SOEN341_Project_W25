@@ -1,19 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../config/firebase";
 import { signOut } from "firebase/auth";
-import {
-  doc,
-  getDocs,
-  setDoc,
-  addDoc,
-  collection,
-  query,
-  where,
-} from "firebase/firestore";
-
+import { doc, getDocs,  addDoc, collection, query, where,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import "./Dashboard.css";
+import { deleteDoc } from "firebase/firestore";
+import { getDoc } from "firebase/firestore";
+
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);
@@ -30,9 +23,6 @@ const AdminDash = () => {
     }));
     setChannels(channelList);
   };
-
-  
-
   const CreateChannel = async () => {
     const channelName = prompt("Enter channel name");
     if (channelName) {
@@ -53,12 +43,38 @@ const AdminDash = () => {
       }
     }
   };
-
   const GoToChannel = (channel) => {
-    navigate(`/channel/${channel.id}`, { state: { channel } });
+    navigate(`/channelA/${channel.id}`, { state: { channel } });
   };
   const Logout = () => {
-    navigate("/");
+    signOut(auth).then(() => navigate("/"));
+  };
+  const DeleteChannel = async (channelId) => {
+    if (!channelId) {
+      alert("Invalid channel ID.");
+      return;
+    }
+
+    // Check if the current user is an admin
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists() || userSnap.data().role !== "admin") {
+      alert("Bruh, you're not an admin!");
+      return;
+    }
+
+    const confirmDelete = window.confirm("do you really want to delete this channel?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "channels", channelId)); // Delete the specific channel
+      setChannels(channels.filter((channel) => channel.id !== channelId));
+      alert("Channel deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting channel:", error);
+      alert("Failed to delete channel.");
+    }
   };
   useEffect(() => {
     fetchChannels();
@@ -66,21 +82,27 @@ const AdminDash = () => {
 
   return (
     <div>
-      <h1>Admin Dashboard</h1>
+      <h1>Dashboard</h1>
       <p>Logged in as: <strong>{user?.email}</strong></p>
+      <p>You are an Admin!</p>
       <label>Create a text channel</label>
       <button onClick={CreateChannel}>Create</button>
       <div>
         <h2>Channels</h2>
         <ul>
           {channels.map((channel) => (
-            <li
-              key={channel.id}
-              className="Channel"
-              onClick={() => GoToChannel(channel)}
-            >
-              {channel.name}
-            </li>
+              <li
+                  key={channel.id}
+                  className="ChannelA"
+                  onClick={() => GoToChannel(channel)}
+              >
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  DeleteChannel(channel.id);
+                }}>Delete
+                </button>
+                {channel.name}
+              </li>
           ))}
         </ul>
       </div>

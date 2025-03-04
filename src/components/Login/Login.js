@@ -1,18 +1,10 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import {
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  collection,
-  query,
-  where,
-} from "firebase/firestore";
+import {doc, getDoc, getDocs, setDoc, addDoc, collection, query, where,} from "firebase/firestore";
 import "./Style.css";
+
 //import Cookies from "universal-cookie";
 const Login = () => {
   const [email, setEmail] = useState("");

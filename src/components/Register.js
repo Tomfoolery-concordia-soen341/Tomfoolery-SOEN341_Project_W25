@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import "./Style.css";
+import "./Login/Style.css";
 
 const Register = () => {
   const [RegisterEmail, setRegisterEmail] = useState("");
@@ -11,7 +11,7 @@ const Register = () => {
   const [role, setRole] = useState("");
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const Register = async (e) => {
     e.preventDefault();
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -30,15 +30,16 @@ const Register = () => {
       alert(error.message);
     }
   };
-  const GoBack = () => {
+  const Back = () => {
     navigate("/");
   };
+
   return (
     <div className="OuterContainer">
       <div className="FormContainer">
         <div>
           <h1 className="Register">Register</h1>
-          <form onSubmit={handleRegister} className="FormRegister">
+          <form onSubmit={Register} className="FormRegister">
             <div>
               <label className="Email">Email</label>
               <input
@@ -79,7 +80,7 @@ const Register = () => {
               Register
             </button>
           </form>
-          <h1 onClick={GoBack} className="GoToLogin">
+          <h1 onClick={Back} className="GoToLogin">
             Go back to log in{" "}
           </h1>
         </div>
