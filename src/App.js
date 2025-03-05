@@ -1,9 +1,13 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./components/Login";
-import Dashboard from "./components/Dashboard";
+import Login from "./components/Login/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./components/Register";
+import AdminDash from "./components/AdminDash";
+import AdminChannel from "./components/AdminChannel";
+import MemberDash from "./components/MemberDash";
+import MemberChannel from "./components/MemberChannel";
+import MembersFriendsList from "./components/MemberFriendsList";
 
 function App() {
   return (
@@ -11,15 +15,28 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/Login" element={<Login />} />
+
         <Route
-          path="/dashboard"
+          path="/Admin"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <AdminDash />
             </ProtectedRoute>
           }
         />
+        <Route path="" />
+        <Route
+          path="/Member"
+          element={
+            <ProtectedRoute>
+              <MemberDash />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="" />
+        <Route path="/channelA/:id" element={<AdminChannel />} />
+        <Route path="/friends" element={<MembersFriendsList />} />
+        <Route path="/channelM/:id" element={<MemberChannel />} />
       </Routes>
     </Router>
   );
