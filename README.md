@@ -33,18 +33,18 @@ ChatHaven is a communication platform for users to send messages either directly
 1. Install Node.js from official website<br/>
    link: https://nodejs.org/ <br/>
 
-   To verify installation:<br/>  
+   To verify installation: 
    `node -v`<br/>
    `npm -v`<br/>
 
-2.  Install Create React App<br/>
+2.  Install Create React App:<br/>
     `npm install -g create-react-app`<br/>
 
-3. Create a new React App
+3. Create a new React App:<br/>
     `npx create-react-app my-project-name`<br/>
 
-4.  Navigate to React App<br/>
+4.  Navigate to React App:<br/>
     `cd my-project-name`<br/>
 
-5. Run React App<br/>
+5. Run React App:<br/>
     `npm start`<br/>
