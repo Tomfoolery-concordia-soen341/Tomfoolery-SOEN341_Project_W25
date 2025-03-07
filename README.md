@@ -20,11 +20,31 @@ ChatHaven is a communication platform for users to send messages either directly
 - HTML
 - FireBase
 
+# Role <br/>
+
+- Jeff Zhong (Scrum Master + Backend)<br/>
+- Navraj Jhajj (Backend)<br/>
+- Ming-Hung Kao (Backend)<br/>
+- Gilbert Sedillo (Backend)<br/>
+- Tung Lam Ha (Frontend)<br/>
+
 # Installation Steps(Windows)
 
-1.Install Node.js from official website
-  link: https://nodejs.org/
+1. Install Node.js from official website<br/>
+   link: https://nodejs.org/ <br/>
 
-  To verify installation:  
-  `node -v`
-  `npm -v`
+   To verify installation:<br/>  
+   `node -v`<br/>
+   `npm -v`<br/>
+
+2.  Install Create React App<br/>
+    `npm install -g create-react-app`<br/>
+
+3. Create a new React App
+    `npx create-react-app my-project-name`<br/>
+
+4.  Navigate to React App<br/>
+    `cd my-project-name`<br/>
+
+5. Run React App<br/>
+    `npm start`<br/>
