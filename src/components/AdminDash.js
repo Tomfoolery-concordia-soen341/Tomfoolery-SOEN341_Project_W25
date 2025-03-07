@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../config/firebase";
 import { signOut } from "firebase/auth";
-import { doc, getDocs,  addDoc, collection, query, where,} from "firebase/firestore";
+import {
+  doc,
+  getDocs,
+  addDoc,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
-
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);
@@ -23,6 +29,10 @@ const AdminDash = () => {
     }));
     setChannels(channelList);
   };
+  const GoToFriendsList = () => {
+    navigate("/Afriends"); // Redirect to the friends list page
+  };
+  
   const CreateChannel = async () => {
     const channelName = prompt("Enter channel name");
     if (channelName) {
@@ -64,7 +74,9 @@ const AdminDash = () => {
       return;
     }
 
-    const confirmDelete = window.confirm("do you really want to delete this channel?");
+    const confirmDelete = window.confirm(
+      "do you really want to delete this channel?"
+    );
     if (!confirmDelete) return;
 
     try {
@@ -83,7 +95,9 @@ const AdminDash = () => {
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Logged in as: <strong>{user?.email}</strong></p>
+      <p>
+        Logged in as: <strong>{user?.email}</strong>
+      </p>
       <p>You are an Admin!</p>
       <label>Create a text channel</label>
       <button onClick={CreateChannel}>Create</button>
@@ -91,20 +105,27 @@ const AdminDash = () => {
         <h2>Channels</h2>
         <ul>
           {channels.map((channel) => (
-              <li
-                  key={channel.id}
-                  className="ChannelA"
-                  onClick={() => GoToChannel(channel)}
-              >
-                <button onClick={(e) => {
+            <li
+              key={channel.id}
+              className="ChannelA"
+              onClick={() => GoToChannel(channel)}
+            >
+              <button
+                onClick={(e) => {
                   e.stopPropagation();
                   DeleteChannel(channel.id);
-                }}>Delete
-                </button>
-                {channel.name}
-              </li>
+                }}
+              >
+                Delete
+              </button>
+              {channel.name}
+            </li>
           ))}
         </ul>
+      </div>
+      <div>
+        <h1>Access your Friends list!</h1>
+        <button onClick={GoToFriendsList}>Go to Friends List</button>
       </div>
       <button onClick={Logout}>Log out</button>
     </div>
