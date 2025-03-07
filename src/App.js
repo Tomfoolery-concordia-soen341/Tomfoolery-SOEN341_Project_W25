@@ -8,6 +8,7 @@ import AdminChannel from "./components/AdminChannel";
 import MemberDash from "./components/MemberDash";
 import MemberChannel from "./components/MemberChannel";
 import MembersFriendsList from "./components/MemberFriendsList";
+import AdminsFriendsList from "./components/AdminFriendsList";
 
 function App() {
   return (
@@ -34,8 +35,9 @@ function App() {
           }
         />
         <Route path="" />
+        <Route path="/Afriends" element={<AdminsFriendsList />} />
         <Route path="/channelA/:id" element={<AdminChannel />} />
-        <Route path="/friends" element={<MembersFriendsList />} />
+        <Route path="/Mfriends" element={<MembersFriendsList />} />
         <Route path="/channelM/:id" element={<MemberChannel />} />
       </Routes>
     </Router>

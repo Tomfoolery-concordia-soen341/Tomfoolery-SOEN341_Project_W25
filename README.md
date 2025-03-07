@@ -21,15 +21,16 @@ Firebase will serve as our method of making the front end and make simple functi
 
 # Team member list (and roles)
 
-- Jeff Zhong (Aka Fleeted) <br/>
+
+- Jeff Zhong (Aka Fleeted) 40283099<br/>
       I will be the ScrumMaster of the team and organize the meetings with the group. I am in charge of working on the backend.<br/>
-- Navraj Jhajj (Aka LordeBrun)<br/>
+- Navraj Jhajj (Aka LordeBrun) 40129282<br/>
       I will be working on the backend for error handling and exception handling.<br/>
-- Ming-Hung Kao (Aka Tonyog1234)<br/>
+- Ming-Hung Kao (Aka Tonyog1234) 40255597<br/>
       I will work on the backend in functionalities and new features.<br/>
-- Gilbert Sedillo (Aka gtsedillo)<br/>
+- Gilbert Sedillo (Aka gtsedillo) 40115222<br/>
       I will work on the backend and focus on the logic of manipulating data in the database.<br/>
-- Tung Lam Ha (Aka Lamosaur)<br/>
+- Tung Lam Ha (Aka Lamosaur) 40238338<br/>
       I will work on the front-end and provide a good UI for the website.<br/>
 
 
