@@ -21,6 +21,7 @@ Firebase will serve as our method of making the front end and make simple functi
 
 # Team member list (and roles)
 
+
 - Jeff Zhong (Aka Fleeted) 40283099<br/>
       I will be the ScrumMaster of the team and organize the meetings with the group. I am in charge of working on the backend.<br/>
 - Navraj Jhajj (Aka LordeBrun) 40129282<br/>
