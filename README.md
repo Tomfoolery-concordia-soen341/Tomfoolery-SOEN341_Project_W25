@@ -33,7 +33,7 @@ ChatHaven is a communication platform for users to send messages either directly
 1. Install Node.js from official website<br/>
    link: https://nodejs.org/ <br/>
 
-   To verify installation: 
+   To verify installation: <br/>
    `node -v`<br/>
    `npm -v`<br/>
 
