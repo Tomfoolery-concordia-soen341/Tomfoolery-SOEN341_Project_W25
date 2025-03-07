@@ -4,13 +4,21 @@ Welcome to Team TomFoolery's github repository for ChatHaven.
 
 ChatHaven is a communication platform for users to send messages either directly to other users or through a text channel. The users can send messages and share various media files to others. It is maintained by various roles in the system such that each text channel is maintained and well managed for the best user experience.
 
-# Team member list
+# Description
+We are tasked with the mission to build a communication website that is useable and marketable. This web-application must be useful for anyone who wants to communicate to a friend or group. Each user will be able to customize their profile and enjoy a user-friendly page with an amazing UI.
 
-- Jeff Zhong
-- Navraj Jhajj
-- Ming-Hung Kao
-- Gilbert Sedillo
-- Tung Lam Ha
+# Team member list (and roles)
+
+- Jeff Zhong (Aka Fleeted)
+      I will be the ScrumMaster of the team and organize the meetings with the group. I am in charge of working on the backend.
+- Navraj Jhajj (Aka LordeBrun)
+      I will be working on the backend for error handling and exception handling.
+- Ming-Hung Kao (Aka Tonyog1234)
+      I will work on the backend in functionalities and new features.
+- Gilbert Sedillo (Aka gtsedillo)
+      I will work on the backend and focus on the logic of manipulating data in the database.
+- Tung Lam Ha (Aka Lamosaur)
+      I will work on the front-end and provide a good UI for the website.
 
 # Technology and tools used
 
@@ -18,15 +26,7 @@ ChatHaven is a communication platform for users to send messages either directly
 - JavaScript
 - CSS
 - HTML
-- FireBase
-
-# Role <br/>
-
-- Jeff Zhong (Scrum Master + Backend)<br/>
-- Navraj Jhajj (Backend)<br/>
-- Ming-Hung Kao (Backend)<br/>
-- Gilbert Sedillo (Backend)<br/>
-- Tung Lam Ha (Frontend)<br/>
+- FireBase (+ Firestore database)
 
 # Installation Steps(Windows)
 
