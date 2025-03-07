@@ -20,3 +20,11 @@ ChatHaven is a communication platform for users to send messages either directly
 - HTML
 - FireBase
 
+# Installation Steps(Windows)
+
+1.Install Node.js from official website
+  link: https://nodejs.org/
+
+  To verify installation:  
+  `node -v`
+  `npm -v`
