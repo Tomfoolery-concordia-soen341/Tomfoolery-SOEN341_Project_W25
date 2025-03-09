@@ -6,6 +6,13 @@ ChatHaven is a communication platform for users to send messages either directly
 
 # Description
 We are tasked with the mission to build a communication website that is useable and marketable. This web-application must be useful for anyone who wants to communicate to a friend or group. Each user will be able to customize their profile and enjoy a user-friendly page with an amazing UI.
+
+# Link <br/>
+Burndownchart : https://docs.google.com/spreadsheets/d/1yhLOJrRAz1dwM7n8qFUsmdbUiWWtZg0m9sxIz--L_UM/edit?gid=0#gid=0<br/>
+
+Timesheet : https://docs.google.com/spreadsheets/d/1FEDc8cMEydLw00BM1tvh6cvz-XoIx2JuGmlCUSJZBio/edit?gid=1921949699#gid=1921949699<br/>
+
+Minutes : https://drive.google.com/drive/u/0/folders/1SHt3s_rZAJD5GHZoS5Io6v1nZYbFub1y<br/>
 # Technology and tools used
 
 - React <br>
@@ -54,9 +61,4 @@ Firebase will serve as our method of making the front end and make simple functi
 
 5. Run React App:<br/>
     `npm start`<br/>
-# Link <br/>
-Burndownchart : https://docs.google.com/spreadsheets/d/1yhLOJrRAz1dwM7n8qFUsmdbUiWWtZg0m9sxIz--L_UM/edit?gid=0#gid=0<br/>
 
-Timesheet : https://docs.google.com/spreadsheets/d/1FEDc8cMEydLw00BM1tvh6cvz-XoIx2JuGmlCUSJZBio/edit?gid=1921949699#gid=1921949699<br/>
-
-Minutes : https://drive.google.com/drive/u/0/folders/1SHt3s_rZAJD5GHZoS5Io6v1nZYbFub1y<br/>
