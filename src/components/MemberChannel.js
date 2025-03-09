@@ -9,8 +9,7 @@ const MemberChannel = () => {
   const [newMessage, setNewMessage] = useState("");
   const { state } = useLocation();
   const { channel } = state;
-  const [allUsers, setAllUsers] = useState([]); // List of all users
-  const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
+  const [setAllUsers] = useState([]); // List of all users
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,7 +42,6 @@ const MemberChannel = () => {
   // Listen for chat messages
   const listenForMessages = () => {
     const messagesRef = collection(db, "channels", channel.id, "messages");
-    const q = orderBy("timestamp"); 
 
     onSnapshot(collection(db, "channels", channel.id, "messages"), (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));

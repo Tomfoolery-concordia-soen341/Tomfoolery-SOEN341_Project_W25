@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, orderBy, onSnapshot, addDoc, serverTimestamp,} from "firebase/firestore";
+import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
-import {query} from "firebase/firestore";
 
 const AdminChannel = () => {
   const { state } = useLocation();

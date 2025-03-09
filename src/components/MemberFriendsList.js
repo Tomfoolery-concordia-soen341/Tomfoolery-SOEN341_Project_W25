@@ -26,7 +26,6 @@ const MemberFriendsList = () => {
 
     const fetchFriends = async () => {
         if (!user) return;
-        const userRef = doc(db, "users", user.uid);
         const userSnapshot = await getDocs(
             query(collection(db, "users"), where("email", "==", user.email))
         ); //return an array of documents
