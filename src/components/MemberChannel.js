@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {doc, getDoc, collection, addDoc, orderBy, onSnapshot, serverTimestamp, getDocs,} from "firebase/firestore";
+import {doc, getDoc, collection, addDoc, onSnapshot, serverTimestamp, getDocs,} from "firebase/firestore";
 import { db, auth } from "../config/firebase";
 import {useLocation, useNavigate} from "react-router-dom"; // Import Firestore & Auth
 
@@ -41,8 +41,6 @@ const MemberChannel = () => {
 
   // Listen for chat messages
   const listenForMessages = () => {
-    const messagesRef = collection(db, "channels", channel.id, "messages");
-
     onSnapshot(collection(db, "channels", channel.id, "messages"), (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));
     });
