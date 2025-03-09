@@ -54,3 +54,7 @@ Firebase will serve as our method of making the front end and make simple functi
 
 5. Run React App:<br/>
     `npm start`<br/>
+# Link <br/>
+Burndownchart : https://docs.google.com/spreadsheets/d/1yhLOJrRAz1dwM7n8qFUsmdbUiWWtZg0m9sxIz--L_UM/edit?gid=0#gid=0<br/>
+Timesheet : https://docs.google.com/spreadsheets/d/1FEDc8cMEydLw00BM1tvh6cvz-XoIx2JuGmlCUSJZBio/edit?gid=1921949699#gid=1921949699<br/>
+Minutes : https://drive.google.com/drive/u/0/folders/1SHt3s_rZAJD5GHZoS5Io6v1nZYbFub1y<br/>
