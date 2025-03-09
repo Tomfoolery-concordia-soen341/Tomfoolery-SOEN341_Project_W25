@@ -12,7 +12,7 @@ Burndownchart : https://docs.google.com/spreadsheets/d/1yhLOJrRAz1dwM7n8qFUsmdbU
 
 Timesheet : https://docs.google.com/spreadsheets/d/1FEDc8cMEydLw00BM1tvh6cvz-XoIx2JuGmlCUSJZBio/edit?gid=1921949699#gid=1921949699<br/>
 
-Minutes : https://drive.google.com/drive/u/0/folders/1SHt3s_rZAJD5GHZoS5Io6v1nZYbFub1y<br/>
+Minutes : https://drive.google.com/drive/u/0/folders/17p2frDjQ2MccHpU2QbbHRmB2fM60xYD5<br/>
 # Technology and tools used
 
 - React <br>
