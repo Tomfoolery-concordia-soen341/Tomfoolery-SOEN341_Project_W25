@@ -126,7 +126,7 @@ const AdminChannel = () => {
 
   return (
       <div>
-        <h1> Channel: {channel.name}</h1>
+        {channel.isPrivate ? <h1>Private Channel: {channel.name}</h1> : <h1>Public Channel: {channel.name}</h1>}
         <div>
           Admin Permissions ON
         </div>
