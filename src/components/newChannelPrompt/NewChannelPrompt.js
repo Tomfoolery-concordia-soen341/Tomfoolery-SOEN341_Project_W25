@@ -6,6 +6,7 @@ import "./Modal.css"
 export default function NewChannelPrompt({onClose}) {
     const [channelName, setChannelName] = useState("");
     const [privacy, setPrivacy] = useState(false);
+    const [def, setDef] = useState(false);
 
     const CreateChannel = async () => {
         if (channelName) {
