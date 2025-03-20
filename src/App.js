@@ -9,7 +9,7 @@ import MemberDash from "./components/MemberDash";
 import MemberChannel from "./components/MemberChannel";
 import MembersFriendsList from "./components/MemberFriendsList";
 import AdminsFriendsList from "./components/AdminFriendsList";
-
+import OfflineFriendList from "./components/OfflineFriendList";
 function App() {
   return (
     <Router>
@@ -39,6 +39,7 @@ function App() {
         <Route path="/channelA/:id" element={<AdminChannel />} />
         <Route path="/Mfriends" element={<MembersFriendsList />} />
         <Route path="/channelM/:id" element={<MemberChannel />} />
+        <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
       </Routes>
     </Router>
   );
