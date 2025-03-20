@@ -37,26 +37,6 @@ const AdminDash = () => {
     navigate("/Afriends"); // Redirect to the friends list page
   };
   
-  const CreateChannel = async () => {
-    const channelName = prompt("Enter channel name");
-    if (channelName) {
-      const channelRef = collection(db, "channels");
-      const q = query(channelRef, where("name", "==", channelName));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        const newChannel = await addDoc(channelRef, {
-          name: channelName,
-          members: [], // Initialize with an empty members array
-        });
-        setChannels([
-          ...channels,
-          { id: newChannel.id, name: channelName, members: [] },
-        ]);
-      } else {
-        alert("Channel already exists");
-      }
-    }
-  };
   const GoToChannel = (channel) => {
     navigate(`/channelA/${channel.id}`, { state: { channel } });
   };
