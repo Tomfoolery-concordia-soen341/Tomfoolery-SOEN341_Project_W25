@@ -13,6 +13,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
+import {createPortal} from "react-dom";
+import NewChannelPrompt from "./newChannelPrompt/NewChannelPrompt";
+import "./newChannelPrompt/Modal.css"
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);
