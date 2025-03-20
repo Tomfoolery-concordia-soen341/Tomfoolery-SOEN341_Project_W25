@@ -74,7 +74,7 @@ const AdminDash = () => {
   };
   useEffect(() => {
     fetchChannels();
-  }, []);
+  }, [dialogShow]);
 
   return (
     <div>
