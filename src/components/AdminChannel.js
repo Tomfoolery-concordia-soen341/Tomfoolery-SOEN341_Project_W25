@@ -127,6 +127,7 @@ const AdminChannel = () => {
   return (
       <div>
         {channel.isPrivate ? <h1>Private Channel: {channel.name}</h1> : <h1>Public Channel: {channel.name}</h1>}
+        {channel.isDefault ? <p>New users will be automatically added to this default channel</p> : null}
         <div>
           Admin Permissions ON
         </div>
