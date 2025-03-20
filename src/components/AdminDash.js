@@ -84,7 +84,15 @@ const AdminDash = () => {
       </p>
       <p>You are an Admin!</p>
       <label>Create a text channel</label>
-      <button onClick={CreateChannel}>Create</button>
+      <div>
+        <button onClick={() => setDialogShow(true)}>
+          Create a New Channel
+        </button>
+        {dialogShow && createPortal(
+            <div className = "overlay"><NewChannelPrompt onClose={ () => setDialogShow(false)} /></div>,
+            document.body
+        )}
+      </div>
       <div>
         <h2>Channels</h2>
         <ul>
