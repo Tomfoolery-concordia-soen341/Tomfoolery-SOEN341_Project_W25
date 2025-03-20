@@ -14,11 +14,20 @@ export default function NewChannelPrompt({onClose}) {
             const q = query(channelRef, where("name", "==", channelName));
             const querySnapshot = await getDocs(q);
             if (querySnapshot.empty) {
-                const newChannel = await addDoc(channelRef, {
-                    name: channelName,
-                    members: [], // Initialize with an empty members array
-                    isPrivate: privacy,
-                });
+                if (!privacy) {
+                    const newChannel = await addDoc(channelRef, {
+                        name: channelName,
+                        members: [], // Initialize with an empty members array
+                        isPrivate: privacy,
+                        isDefault: def,
+                    });
+                } else {
+                    const newChannel = await addDoc(channelRef, {
+                        name: channelName,
+                        members: [], // Initialize with an empty members array
+                        isPrivate: privacy,
+                    });
+                }
             } else {
                 alert("Channel already exists");
             }
