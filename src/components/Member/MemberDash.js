@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, doc, updateDoc ,serverTimestamp} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import NewChannelPrompt from "./dialogPrompts/NewChannelPrompt"
+import NewChannelPrompt from "../dialogPrompts/NewChannelPrompt"
 import {createPortal} from "react-dom";
-import PublicChannelsPrompt from "./dialogPrompts/PublicChannelsPrompt";
+import PublicChannelsPrompt from "../dialogPrompts/PublicChannelsPrompt";
 
 const MemberDash = () => {
   const [user] = useAuthState(auth);

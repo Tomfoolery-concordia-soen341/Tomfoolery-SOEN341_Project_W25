@@ -1,0 +1,38 @@
+.chat-container {
+    width: 100%;
+    max-width: 400px; /* Adjust as needed */
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.chat-window {
+    height: 300px; /* Fixed height */
+    overflow-y: auto; /* Enables scrolling */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-window li {
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background: #e6e6e6;
+}
+
+.selected {
+    background-color: black; /* Light gray background for selected message */
+    border-left: 4px solid #2196f3; /* Blue border for emphasis */
+}
+
+.quoted-message {
+    margin-top: 5px;
+    padding: 5px;
+    background-color: #f0f0f0;
+    border-left: 3px solid #2196f3;
+    font-size: 0.9em;
+    color: #555;
+}

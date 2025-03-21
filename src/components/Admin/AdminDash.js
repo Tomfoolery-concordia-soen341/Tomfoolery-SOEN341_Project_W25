@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { signOut } from "firebase/auth";
 import {
   doc,
@@ -16,8 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
 import {createPortal} from "react-dom";
-import NewChannelPrompt from "./dialogPrompts/NewChannelPrompt";
-import "./dialogPrompts/Modal.css"
+import NewChannelPrompt from "../dialogPrompts/NewChannelPrompt";
+import "../dialogPrompts/Modal.css"
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);

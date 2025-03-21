@@ -10,7 +10,7 @@ import {
   updateDoc,
   arrayRemove,
 } from "firebase/firestore";
-import { db, auth } from "../config/firebase";
+import { db, auth } from "../../config/firebase";
 import {useLocation, useNavigate} from "react-router-dom";
 import {useAuthState} from "react-firebase-hooks/auth"; // Import Firestore & Auth
 

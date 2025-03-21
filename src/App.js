@@ -3,14 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/Login/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./components/Register";
-import AdminDash from "./components/AdminDash";
-import AdminChannel from "./components/AdminChannel";
-import MemberDash from "./components/MemberDash";
-import MemberChannel from "./components/MemberChannel";
-import MembersFriendsList from "./components/MemberFriendsList";
-import AdminsFriendsList from "./components/AdminFriendsList";
+import AdminDash from "./components/Admin/AdminDash";
+import AdminChannel from "./components/Admin/AdminChannel";
+import MemberDash from "./components/Member/MemberDash";
+import MemberChannel from "./components/Member/MemberChannel";
+import MembersFriendsList from "./components/Member/MemberFriendsList";
+import AdminsFriendsList from "./components/Admin/AdminFriendsList";
 import PrivateChannel from "./components/PrivateChannel";
-import OfflineFriendList from "./components/OfflineFriendList";
+import OfflineFriendList from "./components/Offline/OfflineFriendList";
 
 function App() {
   return (
