@@ -1,22 +1,32 @@
 import React, { useState, useEffect } from "react";
-import {doc, getDoc, collection, addDoc, onSnapshot, serverTimestamp, getDocs,} from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  onSnapshot,
+  serverTimestamp,
+  getDocs,
+  updateDoc,
+  arrayRemove,
+} from "firebase/firestore";
 import { db, auth } from "../config/firebase";
-import {useLocation, useNavigate} from "react-router-dom"; // Import Firestore & Auth
+import {useLocation, useNavigate} from "react-router-dom";
+import {useAuthState} from "react-firebase-hooks/auth"; // Import Firestore & Auth
 
 const MemberChannel = () => {
+  const [user] = useAuthState(auth);
+  const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]); 
   const [messages, setMessages] = useState([]); 
   const [newMessage, setNewMessage] = useState("");
   const { state } = useLocation();
   const { channel } = state;
-  const [setAllUsers] = useState([]); // List of all users
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchChannelData();
     listenForMessages();
-    fetchUsers();
-    fetchChannelData();
   }, []);
 
   // Fetch channel members
@@ -25,18 +35,8 @@ const MemberChannel = () => {
     const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
+      setIsDefault(channelSnap.data().isDefault);
     }
-  };
-
-  // Fetch all users
-  const fetchUsers = async () => {
-    const usersRef = collection(db, "users");
-    const querySnapshot = await getDocs(usersRef);
-    const users = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setAllUsers(users);
   };
 
   // Listen for chat messages
@@ -64,18 +64,32 @@ const MemberChannel = () => {
     navigate("/Member");
   };
 
+  const leaveChannel = async () => {
+    const confirm = window.confirm(
+        "Do you want to leave this channel?",
+    );
+    if (!confirm) return;
+
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, {members: arrayRemove(user.email)})
+    .then(() => {BackToDashboard()})
+
+  }
+
   return (
     <div>
       <h1>Channel: {channel.name}</h1>
 
-      <div>
+      {!isDefault ? <div>
+        <button onClick = {leaveChannel}>Leave Channel</button>
+        <p></p>
         <h2>Channel Members</h2>
         <ul>
           {members.map((member, index) => (
             <li key={index}>{member}</li>
           ))}
         </ul>
-      </div>
+      </div> : null }
 
       {/* Chat Section */}
       <div>
