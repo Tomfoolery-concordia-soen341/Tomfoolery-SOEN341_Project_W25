@@ -68,14 +68,14 @@ const MemberChannel = () => {
     <div>
       <h1>Channel: {channel.name}</h1>
 
-      <div>
+      {!isDefault ? <div>
         <h2>Channel Members</h2>
         <ul>
           {members.map((member, index) => (
             <li key={index}>{member}</li>
           ))}
         </ul>
-      </div>
+      </div> : null }
 
       {/* Chat Section */}
       <div>
