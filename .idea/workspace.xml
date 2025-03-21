@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a34c3944-2019-498d-80db-9d5b484faa3e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Admin/AdminChannel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Admin/AdminChannel.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Admin/AdminFriendsList.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Admin/AdminFriendsList.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Member/MemberChannel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Member/MemberChannel.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Member/MemberDash.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Member/MemberDash.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/Member/MemberFriendsList.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Member/MemberFriendsList.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -28,9 +33,9 @@
   "keyToString": {
     "Node.js.ContextMenu.js.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "rec-1",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "F:/SOEN341/Tomfoolery-SOEN341_Project_W25/src/components/Admin",
+    "last_opened_file_path": "F:/SOEN341/Tomfoolery-SOEN341_Project_W25",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -69,7 +74,7 @@
       <workItem from="1742502755205" duration="2237000" />
       <workItem from="1742507644796" duration="1665000" />
       <workItem from="1742509346395" duration="22729000" />
-      <workItem from="1742536364248" duration="318000" />
+      <workItem from="1742536364248" duration="1265000" />
     </task>
     <servers />
   </component>

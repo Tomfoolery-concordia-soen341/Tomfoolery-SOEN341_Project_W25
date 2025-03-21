@@ -34,7 +34,7 @@ const AdminFriendsList = () => {
 
   useEffect(() => {
     fetchFriends();
-  }, [user]);
+  }, [user,fetchFriends]);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -47,7 +47,7 @@ const AdminFriendsList = () => {
         setFirstSelect(null)
       }
     }
-  }, [messages, selectedFriend]);
+  }, [messages, selectedFriend,FirstSelect,newMessage]);
 
   const fetchFriends = async () => {
     if (!user) return;

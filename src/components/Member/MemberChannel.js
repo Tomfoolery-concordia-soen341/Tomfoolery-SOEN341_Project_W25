@@ -17,7 +17,7 @@ const MemberChannel = () => {
     listenForMessages();
     fetchUsers();
     fetchChannelData();
-  }, []);
+  }, [fetchChannelData,fetchUsers,listenForMessages]);
 
   // Fetch channel members
   const fetchChannelData = async () => {
