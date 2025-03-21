@@ -65,20 +65,22 @@ export default function NewChannelPrompt({onClose}) {
                     </label>
                 </div>
                 <p></p>
-                <div>
-                    <label>
-                        Private
-                        <input value = {privacy} type = "checkbox" onChange={(e) => setPrivacy(e.target.checked)} />
-                    </label>
-                </div>
-                {!privacy ? (
+                { admin ?<div>
+                    <div>
+                        <label>
+                            Private
+                            <input value = {privacy} type = "checkbox" onChange={(e) => setPrivacy(e.target.checked)} />
+                        </label>
+                    </div>
+                    {!privacy ? (
                     <div>
                         <label>
                             Default Channel
                             <input value = {def} type = "checkbox" onChange={(e) => setDef(e.target.checked)} />
                         </label>
                     </div>
-                ) : null}
+                    ) : null}
+                </div> : null }
             </p>
             <div>
                 <button onClick={() => {CreateChannel(); onClose();}}>Save</button>
