@@ -1,7 +1,8 @@
-import React, {useState} from "react";
-import {addDoc, collection, getDocs, query, where} from "firebase/firestore";
-import {db} from "../../config/firebase";
+import React, {useEffect, useState} from "react";
+import {addDoc, collection, doc, getDoc, getDocs, query, where} from "firebase/firestore";
+import {auth, db} from "../../config/firebase";
 import "./Modal.css"
+import {useAuthState} from "react-firebase-hooks/auth";
 
 export default function NewChannelPrompt({onClose}) {
     const [channelName, setChannelName] = useState("");
