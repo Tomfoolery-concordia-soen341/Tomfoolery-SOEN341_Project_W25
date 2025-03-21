@@ -34,16 +34,15 @@ const styles = {
   },
 };
 
-const MemberFriendsList = () => {
+const AdminFriendsList = () => {
   const [user, loading] = useAuthState(auth);
   const [searchEmail, setSearchEmail] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // New state for all registered users
+  const [allUsers, setAllUsers] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [offlineMessages, setOfflineMessages] = useState([]);
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
@@ -53,17 +52,13 @@ const MemberFriendsList = () => {
     if (user) {
       updateLastSeen();
       fetchFriends();
-      const unsubscribeFriends = fetchAllUsers(); // Fetch registered users
-      const unsubscribeOffline = fetchOfflineMessages();
-      return () => {
-        if (unsubscribeFriends) unsubscribeFriends();
-        if (unsubscribeOffline) unsubscribeOffline();
-      };
+      const unsubscribe = fetchAllUsers();
+      return () => unsubscribe();
     }
   }, [user, loading]);
 
   const ReturnHomePage = () => {
-    navigate("/Member");
+    navigate("/Admin");
   };
 
   const updateLastSeen = async () => {
@@ -71,8 +66,24 @@ const MemberFriendsList = () => {
     const userRef = doc(db, "users", user.uid);
     await updateDoc(userRef, {
       lastSeen: serverTimestamp(),
-      status: "active", // Set status to active on login
+      status: "active", // Set status to active when online
     });
+  };
+
+  const handleLogout = async () => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+
+    try {
+      await updateDoc(userRef, {
+        lastSeen: serverTimestamp(), // Update lastSeen on logout
+        status: "inactive", // Set status to inactive
+      });
+      await auth.signOut();
+      navigate("/");
+    } catch (err) {
+      setError(`Logout failed: ${err.message}`);
+    }
   };
 
   const fetchFriends = async () => {
@@ -105,51 +116,17 @@ const MemberFriendsList = () => {
   const fetchAllUsers = () => {
     if (!user) return;
     const usersRef = collection(db, "users");
-    const unsubscribe = onSnapshot(
-      usersRef,
-      (snapshot) => {
-        const usersData = snapshot.docs
-          .map((doc) => ({
-            email: doc.data().email,
-            lastSeen: doc.data().lastSeen || null,
-            status: doc.data().status || "inactive",
-            role: doc.data().role || "unknown",
-          }))
-          .filter((registeredUser) => registeredUser.email !== user.email);
-        setAllUsers([...usersData]);
-      },
-      (error) => {
-        console.error("Error fetching all users:", error);
-      }
-    );
-    return unsubscribe;
-  };
-
-  const fetchOfflineMessages = () => {
-    if (!user || !user.email) return () => {};
-
-    const offlineMessagesRef = collection(db, "offlineMessages");
-    const q = query(
-      offlineMessagesRef,
-      where("recipient", "==", user.email),
-      where("read", "==", false),
-      orderBy("timestamp", "asc")
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const offlineMsgs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setOfflineMessages(offlineMsgs);
-      },
-      (error) => {
-        console.error("Error fetching offline messages:", error);
-        setError(`Failed to load offline messages: ${error.message}`);
-      }
-    );
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const usersData = snapshot.docs
+        .map((doc) => ({
+          email: doc.data().email,
+          lastSeen: doc.data().lastSeen || null,
+          status: doc.data().status || "inactive",
+          role: doc.data().role || "unknown",
+        }))
+        .filter((registeredUser) => registeredUser.email !== user.email);
+      setAllUsers(usersData);
+    });
     return unsubscribe;
   };
 
@@ -166,7 +143,8 @@ const MemberFriendsList = () => {
   };
 
   const addFriend = async (friend) => {
-    if (!user || friend.email === user?.email) {
+    if (!user) return;
+    if (friend.email === user?.email) {
       setError("You cannot add yourself as a friend!");
       return;
     }
@@ -225,11 +203,6 @@ const MemberFriendsList = () => {
     setNewMessage("");
   };
 
-  const markOfflineMessageAsRead = async (messageId) => {
-    const messageRef = doc(db, "offlineMessages", messageId);
-    await updateDoc(messageRef, { read: true });
-  };
-
   const closeError = () => setError(null);
   const closeConfirmation = () => setConfirmation(null);
   const CloseSearch = () => {
@@ -242,10 +215,10 @@ const MemberFriendsList = () => {
   };
 
   const formatLastSeen = (timestamp, status) => {
-    if (status === "active") return "Online";
-    if (!timestamp) return "Offline";
+    if (status === "active") return "Online"; // No timestamp when active
+    if (!timestamp) return "Offline"; // No timestamp if null
     const date = timestamp.toDate();
-    return `Last seen: ${formatDistanceToNow(date, { addSuffix: true })}`;
+    return `Last seen: ${formatDistanceToNow(date, { addSuffix: true })}`; // Show timestamp when inactive
   };
 
   const isOnline = (status) => {
@@ -305,7 +278,8 @@ const MemberFriendsList = () => {
               ></span>
               {registeredUser.email} - {registeredUser.role}{" "}
               <span>
-                ({formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
+                (
+                {formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
                 )
               </span>
             </li>
@@ -314,22 +288,6 @@ const MemberFriendsList = () => {
           <p>No other registered users found</p>
         )}
       </ul>
-
-      <h2>Offline Messages</h2>
-      {offlineMessages.length > 0 ? (
-        <ul>
-          {offlineMessages.map((msg) => (
-            <li key={msg.id}>
-              <strong>From: {msg.sender}</strong> - {msg.text}{" "}
-              <button onClick={() => markOfflineMessageAsRead(msg.id)}>
-                Mark as Read
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No offline messages.</p>
-      )}
 
       {error && (
         <div className="error-popup">
@@ -374,8 +332,9 @@ const MemberFriendsList = () => {
         </div>
       )}
       <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
+      {/* {user && <button onClick={handleLogout}>Logout</button>} */}
     </div>
   );
 };
 
-export default MemberFriendsList;
+export default AdminFriendsList;
