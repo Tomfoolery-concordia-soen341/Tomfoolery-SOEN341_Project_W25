@@ -28,7 +28,8 @@ const AdminDash = () => {
   // Fetch all channels from Firestore
   const fetchChannels = async () => {
     const channelRef = collection(db, "channels");
-    const querySnapshot = await getDocs(channelRef);
+    const qndefault = query(channelRef, where("isDefault", "!=", true));
+    const querySnapshot = await getDocs(qndefault);
     const channelList = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
