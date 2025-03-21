@@ -10,6 +10,7 @@ const AdminChannel = () => {
   const { state } = useLocation();
   const { channel } = state;
   const [user] = useAuthState(auth);
+  const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // List of all users
   const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
@@ -24,6 +25,7 @@ const AdminChannel = () => {
     const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
+      setIsDefault(channelSnap.data().isDefault);
     }
   };
 
@@ -126,21 +128,21 @@ const AdminChannel = () => {
 
   return (
       <div>
-        {channel.isPrivate ? <h1>Private Channel: {channel.name}</h1> : <h1>Public Channel: {channel.name}</h1>}
+        <h1>Public Channel: {channel.name}</h1>
         {channel.isDefault ? <p>New users will be automatically added to this default channel</p> : null}
         <div>
           Admin Permissions ON
         </div>
-        <div>
+        {!isDefault ? <div>
           <h2>Members</h2>
           <ul style={{listStyleType: "none", padding: 0}}>
             {members.map((member, index) => (
                 <li key={index}>{member}</li>
             ))}
           </ul>
-        </div>
+        </div> : null }
 
-        <div>
+        {!isDefault ? <div>
           <h3>Add Member</h3>
           <div>
             <select
@@ -159,7 +161,7 @@ const AdminChannel = () => {
             <button onClick={addMember}>Add Member</button>
           </div>
           <button onClick={BackToDashboard}>Go back to Dashboard</button>
-        </div>
+        </div> : null }
 
         {/* Chat Section */}
         <div>
