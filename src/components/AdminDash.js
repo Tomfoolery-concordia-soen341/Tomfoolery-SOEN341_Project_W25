@@ -120,12 +120,33 @@ const AdminDash = () => {
       </div>
       <div>
         <h2>Channels</h2>
+        <h3>Default Channels</h3>
         <ul>
-          {channels.map((channel) => (
+          {defaultChannels.map((channel) => (
+              <li
+                  key={channel.id}
+                  className="ChannelA"
+                  onClick={() => GoToChannel(channel)}
+              >
+                <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      DeleteChannel(channel.id);
+                    }}
+                >
+                  Delete
+                </button>
+                {channel.name}
+              </li>
+          ))}
+        </ul>
+        <h3>Private Channels</h3>
+        <ul>
+          {privateChannels.map((channel) => (
             <li
               key={channel.id}
               className="ChannelA"
-              onClick={() => GoToChannel(channel)}
+              onClick={() => GoToPrivChannel(channel)}
             >
               <button
                 onClick={(e) => {
@@ -137,6 +158,26 @@ const AdminDash = () => {
               </button>
               {channel.name}
             </li>
+          ))}
+        </ul>
+        <h3>Public Channels</h3>
+        <ul>
+          {channels.map((channel) => (
+              <li
+                  key={channel.id}
+                  className="ChannelA"
+                  onClick={() => GoToChannel(channel)}
+              >
+                <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      DeleteChannel(channel.id);
+                    }}
+                >
+                  Delete
+                </button>
+                {channel.name}
+              </li>
           ))}
         </ul>
       </div>
