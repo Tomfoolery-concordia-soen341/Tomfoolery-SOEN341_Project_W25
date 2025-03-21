@@ -4,21 +4,25 @@ import { signOut } from "firebase/auth";
 import {collection, getDocs, query, where,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import NewChannelPrompt from "./newChannelPrompt/NewChannelPrompt"
+import NewChannelPrompt from "./dialogPrompts/NewChannelPrompt"
 import {createPortal} from "react-dom";
+import PublicChannelsPrompt from "./dialogPrompts/PublicChannelsPrompt";
 
 const MemberDash = () => {
   const [user] = useAuthState(auth); //it listens to users authentication state
   const [channels, setChannels] = useState([]);
   const [defaultChannels, setDefaultChannels] = useState([]);
   const [privateChannels, setPrivateChannels] = useState([]);
-  const [dialogShow, setDialogShow] = useState(false);
+  const [publicChannels, setPublicChannels] = useState([]);
+  const [dialogNewChannel, setDialogNewChannel] = useState(false);
+  const [dialogJoinChannel, setDialogJoinChannel] = useState(false);
+
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchChannels();
-  }, [user, dialogShow]); //it only gets triggered when user changes
+  }, [user, dialogNewChannel]); //it only gets triggered when user changes
 
   const GoToFriendsList = () => {
     navigate("/Mfriends"); // Redirect to the friends list page
@@ -41,6 +45,13 @@ const MemberDash = () => {
       ...doc.data(),
     }));
     setChannels(channelList);
+
+    const pubQuerySnapshot = await getDocs(channelRef);
+    const pubChannelList = pubQuerySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
+    setPublicChannels(pubChannelList);
 
       const qdefault = query(channelRef, where("isDefault", "==", true));
       const defaultQuerySnapshot = await getDocs(qdefault);
@@ -99,11 +110,11 @@ const MemberDash = () => {
           </ul>
           <label>Create a private channel</label>
           <div>
-              <button onClick={() => setDialogShow(true)}>
+              <button onClick={() => setDialogNewChannel(true)}>
                   Create a New Channel
               </button>
-              {dialogShow && createPortal(
-                  <div className = "overlay"><NewChannelPrompt onClose={ () => setDialogShow(false)} /></div>,
+              {dialogNewChannel && createPortal(
+                  <div className = "overlay"><NewChannelPrompt onClose={ () => setDialogNewChannel(false)} /></div>,
                   document.body
               )}
           </div>
@@ -119,6 +130,15 @@ const MemberDash = () => {
             </li>
           ))}
         </ul>
+          <div>
+              <button onClick={() => setDialogJoinChannel(true)}>
+                  Join a public channel
+              </button>
+              {dialogJoinChannel && createPortal(
+                  <div className = "overlay"><PublicChannelsPrompt onClose={ () => setDialogJoinChannel(false)} /></div>,
+                  document.body
+              )}
+          </div>
       </div>
       <div>
         <h1>Access your Friends list!</h1>
