@@ -35,6 +35,23 @@ const AdminDash = () => {
       ...doc.data(),
     }));
     setChannels(channelList);
+
+    const qdefault = query(channelRef, where("isDefault", "==", true));
+    const defaultQuerySnapshot = await getDocs(qdefault);
+    const defaultChannelList = defaultQuerySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setDefaultChannels(defaultChannelList);
+
+    const privChannelRef = collection(db, "privateChannels");
+    //const qpriv = query(privChannelRef, where("members", "array-contains", user.email));
+    const privQuerySnapshot = await getDocs(privChannelRef);
+    const privChannelList = privQuerySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    setPrivateChannels(privChannelList);
   };
   const GoToFriendsList = () => {
     navigate("/Afriends"); // Redirect to the friends list page
