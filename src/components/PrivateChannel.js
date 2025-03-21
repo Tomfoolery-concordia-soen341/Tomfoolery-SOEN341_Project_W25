@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp, query } from "firebase/firestore";
+import {
+    doc,
+    updateDoc,
+    arrayUnion,
+    getDoc,
+    collection,
+    getDocs,
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+    query,
+    arrayRemove
+} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
@@ -96,6 +108,26 @@ const PrivateChannel = () => {
         setNewMessage(""); // Clear input after sending
     };
 
+    const leaveChannel = async () => {
+        if (owner) {
+            const confirm = window.confirm(
+                "Do you want to leave this channel? This action will not delete the channel.",
+            );
+            if (!confirm) return;
+        } else {
+            const confirm = window.confirm(
+                "Do you want to leave this channel?",
+            );
+            if (!confirm) return;
+        }
+
+
+        const channelRef = doc(db, "privateChannels", channel.id);
+        await updateDoc(channelRef, {members: arrayRemove(user.email)})
+            .then(() => {BackToDashboard()})
+
+    }
+
     useEffect(() => {
         fetchChannelData();
         fetchUsers(); // Fetch the list of users
@@ -117,7 +149,9 @@ const PrivateChannel = () => {
 
             {admin ? <div>
                 <h3>Owner: {ownerEmail}</h3>
-            </div> : null }
+            </div> : <div>
+                <button onClick = {leaveChannel}>Leave Channel</button>
+            </div> }
 
             {(owner || admin) ? <div>
                 <h2>Members</h2>

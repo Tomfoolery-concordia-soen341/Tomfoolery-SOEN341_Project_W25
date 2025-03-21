@@ -107,7 +107,7 @@ const MemberDash = () => {
                   document.body
               )}
           </div>
-          <h3>Public Channels</h3>
+          <h3>Your Channels</h3>
         <ul>
           {channels.map((channel) => (
             <li
