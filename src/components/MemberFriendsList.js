@@ -3,6 +3,7 @@ import { auth, db } from "../config/firebase";
 import {collection, getDocs, query, where, doc, updateDoc, arrayUnion, addDoc, orderBy, onSnapshot, serverTimestamp,arrayRemove,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 
 const MemberFriendsList = () => {
     const [user] = useAuthState(auth); //it listens to users authentication state
@@ -15,6 +16,7 @@ const MemberFriendsList = () => {
     const navigate = useNavigate();
     const [error, setError] = useState(null); // State for error message
     const [confirmation, setConfirmation] = useState(null);
+    const [allUsers, setAllUsers] = useState([]); // List of all users
 
     useEffect(() => {
         fetchFriends();
@@ -145,25 +147,25 @@ const MemberFriendsList = () => {
                         <button onClick={CloseSearch}>Return</button>
                     </li>
                 ))}
-            </ul>
+            </ul> 
             <h2>Friends</h2>
             <ul>
-                {friends.length > 0 ? (
-                    friends.map((friend, index) => (
-                        <li
-                            className="Friends List"
-                            key={index}
-                            onClick={() => selectFriend(friend)}
-
-                        >
-                            {friend}
-                        </li>
-                    ))
-                ) : (
-                    <p>No friends added yet</p>
-                )}
-            </ul>
-            {error && (
+  {friends.length > 0 ? (
+    friends.map((friend, index) => {
+      const user = allUsers.find((u) => u.email === friend);
+      return (
+        <li className="Friends List" key={index} onClick={() => selectFriend(friend)}>
+          {friend} - 
+          <span style={{ color: user?.status === "online" ? "green" : "red" }}>
+            {user?.status || "offline"}
+          </span>
+        </li>
+      );
+    })
+  ) : (
+    <p>No friends added yet</p>
+  )}
+</ul>& (
                 <div className="error-popup">
                     <div className="error-content">
                         <h3>Error</h3>
@@ -171,7 +173,7 @@ const MemberFriendsList = () => {
                         <button onClick={closeError}>Close</button>
                     </div>
                 </div>
-            )}
+            )
             {confirmation && (
                 <div className="confirmation-popup">
                     <div className="confirmation-content">

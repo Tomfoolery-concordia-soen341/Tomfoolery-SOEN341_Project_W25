@@ -4,12 +4,15 @@ import { signOut } from "firebase/auth";
 import {collection, getDocs, query, where,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
+import { doc } from "firebase/firestore";
+import { updateDoc } from "firebase/firestore";
 
 const MemberDash = () => {
   const [user] = useAuthState(auth); //it listens to users authentication state
   const [channels, setChannels] = useState([]);
 
   const navigate = useNavigate();
+  const [allUsers, setAllUsers] = useState([]); // List of all users
 
   useEffect(() => {
     fetchChannels();
@@ -37,6 +40,38 @@ const MemberDash = () => {
   const Logout = () => {
     signOut(auth).then(() => navigate("/"));
   };
+
+  useEffect(() => {
+    if (!user) return;
+  
+    const userRef = doc(db, "users", user.uid);
+  
+    updateDoc(userRef, { status: "online" }); // Set online when logged in
+  
+    const handleOffline = () => updateDoc(userRef, { status: "offline" });
+    window.addEventListener("beforeunload", handleOffline);
+  
+    return () => {
+      handleOffline();
+      window.removeEventListener("beforeunload", handleOffline);
+    };
+  }, [user]);
+  
+  // Fetch users with status (Add this function)
+  const fetchUsersWithStatus = async () => {
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    const users = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setAllUsers(users);
+  };
+  
+  // Call function in useEffect
+  useEffect(() => {
+    fetchUsersWithStatus();
+  }, []);
 
   return (
     <div>

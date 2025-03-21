@@ -28,6 +28,8 @@ const AdminFriendsList = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null); // State for error message
   const [confirmation, setConfirmation] = useState(null);
+  const [allUsers, setAllUsers] = useState([]); // List of all users
+  
 
   useEffect(() => {
     fetchFriends();
@@ -141,6 +143,37 @@ const AdminFriendsList = () => {
     setMessages([]);
   };
 
+  useEffect(() => {
+    if (!user) return;
+  
+    const userRef = doc(db, "users", user.uid);
+    updateDoc(userRef, { status: "online" });
+  
+    const handleOffline = () => updateDoc(userRef, { status: "offline" });
+    window.addEventListener("beforeunload", handleOffline);
+  
+    return () => {
+      handleOffline();
+      window.removeEventListener("beforeunload", handleOffline);
+    };
+  }, [user]);
+  
+  // Fetch friends with status (Add this function)
+  const fetchFriendsWithStatus = async () => {
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    const users = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setAllUsers(users);
+  };
+  
+  // Call function in useEffect
+  useEffect(() => {
+    fetchFriendsWithStatus();
+  }, []);
+
   return (
     <div>
       <h2>Add Friends</h2>
@@ -162,20 +195,22 @@ const AdminFriendsList = () => {
       </ul>
       <h2>Friends</h2>
       <ul>
-        {friends.length > 0 ? (
-          friends.map((friend, index) => (
-            <li
-              className="Friends List"
-              key={index}
-              onClick={() => selectFriend(friend)}
-            >
-              {friend}
-            </li>
-          ))
-        ) : (
-          <p>No friends added yet</p>
-        )}
-      </ul>
+  {friends.length > 0 ? (
+    friends.map((friend, index) => {
+      const user = allUsers.find((u) => u.email === friend);
+      return (
+        <li className="Friends List" key={index} onClick={() => selectFriend(friend)}>
+          {friend} - 
+          <span style={{ color: user?.status === "online" ? "green" : "red" }}>
+            {user?.status || "offline"}
+          </span>
+        </li>
+      );
+    })
+  ) : (
+    <p>No friends added yet</p>
+  )}
+</ul>
       {error && (
         <div className="error-popup">
           <div className="error-content">

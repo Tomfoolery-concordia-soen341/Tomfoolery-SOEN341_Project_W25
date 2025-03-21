@@ -5,6 +5,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const AdminChannel = () => {
   const { state } = useLocation();
@@ -120,6 +121,37 @@ const AdminChannel = () => {
     retrieveMessages();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+  
+    const userRef = doc(db, "users", user.uid);
+  
+    updateDoc(userRef, { status: "online" }); // Set online when logged in
+  
+    const handleOffline = () => updateDoc(userRef, { status: "offline" });
+    window.addEventListener("beforeunload", handleOffline);
+  
+    return () => {
+      handleOffline();
+      window.removeEventListener("beforeunload", handleOffline);
+    };
+  }, [user]);
+
+  const fetchUsersWithStatus = async () => {
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    const users = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setAllUsers(users);
+  };
+  
+  // Call function in useEffect
+  useEffect(() => {
+    fetchUsersWithStatus();
+  }, []);
+
   const BackToDashboard = () => {
     navigate("/Admin");
   };
@@ -131,13 +163,21 @@ const AdminChannel = () => {
           Admin Permissions ON
         </div>
         <div>
-          <h2>Members</h2>
-          <ul style={{listStyleType: "none", padding: 0}}>
-            {members.map((member, index) => (
-                <li key={index}>{member}</li>
-            ))}
-          </ul>
-        </div>
+  <h2>Members</h2>
+  <ul style={{ listStyleType: "none", padding: 0 }}>
+    {members.map((member) => {
+      const user = allUsers.find((u) => u.email === member);
+      return (
+        <li key={member}>
+          {member} - 
+          <span style={{ color: user?.status === "online" ? "green" : "red" }}>
+            {user?.status || "offline"}
+          </span>
+        </li>
+      );
+    })}
+  </ul>
+</div>
 
         <div>
           <h3>Add Member</h3>

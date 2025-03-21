@@ -13,11 +13,13 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
+import { updateDoc } from "firebase/firestore";
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);
   const [channels, setChannels] = useState([]); // State to store the list of channels
   const navigate = useNavigate();
+  const [allUsers, setAllUsers] = useState([]); // List of all users
 
   // Fetch all channels from Firestore
   const fetchChannels = async () => {
@@ -90,6 +92,37 @@ const AdminDash = () => {
   };
   useEffect(() => {
     fetchChannels();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+  
+    const userRef = doc(db, "users", user.uid);
+    updateDoc(userRef, { status: "online" });
+  
+    const handleOffline = () => updateDoc(userRef, { status: "offline" });
+    window.addEventListener("beforeunload", handleOffline);
+  
+    return () => {
+      handleOffline();
+      window.removeEventListener("beforeunload", handleOffline);
+    };
+  }, [user]);
+  
+  // Fetch friends with status (Add this function)
+  const fetchFriendsWithStatus = async () => {
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    const users = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setAllUsers(users);
+  };
+  
+  // Call function in useEffect
+  useEffect(() => {
+    fetchFriendsWithStatus();
   }, []);
 
   return (
