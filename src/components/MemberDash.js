@@ -4,6 +4,8 @@ import { signOut } from "firebase/auth";
 import {collection, getDocs, query, where,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
+import NewChannelPrompt from "./newChannelPrompt/NewChannelPrompt"
+import {createPortal} from "react-dom";
 
 const MemberDash = () => {
   const [user] = useAuthState(auth); //it listens to users authentication state
@@ -47,6 +49,41 @@ const MemberDash = () => {
       You are a Member!
       <div>
         <h2>Channels</h2>
+          <h3>Default Channels</h3>
+          <ul>
+              {defaultChannels.map((channel) => (
+                  <li
+                      className="Channel"
+                      key={channel.id}
+                      onClick={() => GoToChannel(channel)}
+                  >
+                      {channel.name}
+                  </li>
+              ))}
+          </ul>
+          <h3>Private Channels</h3>
+          <ul>
+              {privateChannels.map((channel) => (
+                  <li
+                      className="Channel"
+                      key={channel.id}
+                      onClick={() => GoToPrivChannel(channel)}
+                  >
+                      {channel.name}
+                  </li>
+              ))}
+          </ul>
+          <label>Create a private channel</label>
+          <div>
+              <button onClick={() => setDialogShow(true)}>
+                  Create a New Channel
+              </button>
+              {dialogShow && createPortal(
+                  <div className = "overlay"><NewChannelPrompt onClose={ () => setDialogShow(false)} /></div>,
+                  document.body
+              )}
+          </div>
+          <h3>Public Channels</h3>
         <ul>
           {channels.map((channel) => (
             <li
