@@ -1,23 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../config/firebase";
 import { signOut } from "firebase/auth";
-import {collection, getDocs, query, where,} from "firebase/firestore";
+import { collection, getDocs, query, where, doc, updateDoc ,serverTimestamp} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 
 const MemberDash = () => {
-  const [user] = useAuthState(auth); //it listens to users authentication state
+  const [user] = useAuthState(auth);
   const [channels, setChannels] = useState([]);
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchChannels();
-  }, [user]); //it only gets triggered when user changes
+    if (user) {
+      fetchChannels();
+    }
+  }, [user]);
 
   const GoToFriendsList = () => {
-    navigate("/Mfriends"); // Redirect to the friends list page
+    navigate("/Mfriends");
   };
+
   const GoToChannel = (channel) => {
     navigate(`/channelM/${channel.id}`, { state: { channel } });
   };
@@ -34,8 +36,20 @@ const MemberDash = () => {
     setChannels(channelList);
   };
 
-  const Logout = () => {
-    signOut(auth).then(() => navigate("/"));
+  const Logout = async () => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    try {
+      await updateDoc(userRef, {
+        lastSeen: serverTimestamp(),
+        status: "inactive", // Set status to inactive on logout
+      });
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("Failed to log out properly.");
+    }
   };
 
   return (

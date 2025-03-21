@@ -1,4 +1,4 @@
-    import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { auth, db } from "../config/firebase";
 import {
   collection,
@@ -16,36 +16,118 @@ import {
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+
+const styles = {
+  statusDot: {
+    height: "10px",
+    width: "10px",
+    borderRadius: "50%",
+    display: "inline-block",
+    marginRight: "5px",
+  },
+  online: {
+    backgroundColor: "green",
+  },
+  offline: {
+    backgroundColor: "red",
+  },
+};
 
 const AdminFriendsList = () => {
-  const [user] = useAuthState(auth); //it listens to users authentication state
+  const [user, loading] = useAuthState(auth);
   const [searchEmail, setSearchEmail] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const navigate = useNavigate();
-  const [error, setError] = useState(null); // State for error message
+  const [error, setError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
 
   useEffect(() => {
-    fetchFriends();
-  }, [user]); //it only gets triggered when user changes
+    if (loading) return;
+    if (user) {
+      updateLastSeen();
+      fetchFriends();
+      const unsubscribe = fetchAllUsers();
+      return () => unsubscribe();
+    }
+  }, [user, loading]);
 
   const ReturnHomePage = () => {
-    navigate("/Admin"); // Redirect to the friends list page
+    navigate("/Admin");
+  };
+
+  const updateLastSeen = async () => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, {
+      lastSeen: serverTimestamp(),
+      status: "active", // Set status to active when online
+    });
+  };
+
+  const handleLogout = async () => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+
+    try {
+      await updateDoc(userRef, {
+        lastSeen: serverTimestamp(), // Update lastSeen on logout
+        status: "inactive", // Set status to inactive
+      });
+      await auth.signOut();
+      navigate("/");
+    } catch (err) {
+      setError(`Logout failed: ${err.message}`);
+    }
   };
 
   const fetchFriends = async () => {
     if (!user) return;
     const userSnapshot = await getDocs(
       query(collection(db, "users"), where("email", "==", user.email))
-    ); //return an array of documents
+    );
     if (!userSnapshot.empty) {
-      const userData = userSnapshot.docs[0].data(); //access the first document, since email is unique, there will be only one document
-      setFriends(userData.friends || []); //if friends is not there, it will be an empty array
+      const userData = userSnapshot.docs[0].data();
+      const friendEmails = userData.friends || [];
+
+      if (friendEmails.length > 0) {
+        const friendsQuery = query(
+          collection(db, "users"),
+          where("email", "in", friendEmails)
+        );
+        const friendsSnapshot = await getDocs(friendsQuery);
+        const friendsData = friendsSnapshot.docs.map((doc) => ({
+          email: doc.data().email,
+          lastSeen: doc.data().lastSeen || null,
+          status: doc.data().status || "inactive",
+        }));
+        setFriends(friendsData);
+      } else {
+        setFriends([]);
+      }
     }
+  };
+
+  const fetchAllUsers = () => {
+    if (!user) return;
+    const usersRef = collection(db, "users");
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const usersData = snapshot.docs
+        .map((doc) => ({
+          email: doc.data().email,
+          lastSeen: doc.data().lastSeen || null,
+          status: doc.data().status || "inactive",
+          role: doc.data().role || "unknown",
+        }))
+        .filter((registeredUser) => registeredUser.email !== user.email);
+      setAllUsers(usersData);
+    });
+    return unsubscribe;
   };
 
   const searchUsers = async () => {
@@ -63,37 +145,35 @@ const AdminFriendsList = () => {
   const addFriend = async (friend) => {
     if (!user) return;
     if (friend.email === user?.email) {
-      //testing!!
-      alert("Not Yourself!!!");
-      setError("Not Yourself!!");
-      console.log("Problem!!");
+      setError("You cannot add yourself as a friend!");
       return;
     }
     const userRef = doc(db, "users", user.uid);
     await updateDoc(userRef, { friends: arrayUnion(friend.email) });
-    setFriends((prevFriends) => [...prevFriends, friend.email]);
-    console.log("Friend added successfully.");
+    setFriends((prevFriends) => [
+      ...prevFriends,
+      {
+        email: friend.email,
+        lastSeen: friend.lastSeen || null,
+        status: friend.status || "inactive",
+      },
+    ]);
     setSearchEmail("");
     setConfirmation("User added as friend!");
   };
 
-  const removeFriend = async (friend) => {
+  const removeFriend = async (friendEmail) => {
     if (!user) return;
     try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userRef, {
-        friends: arrayRemove(friend), // Remove the friend's email from Firestore
-      });
-      // Update the local state
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, { friends: arrayRemove(friendEmail) });
       setFriends((prevFriends) =>
-        prevFriends.filter((email) => email !== friend)
+        prevFriends.filter((friend) => friend.email !== friendEmail)
       );
-      setSelectedFriend(null); // Close the pop-up
-      setError(null); // Clear any errors
+      setSelectedFriend(null);
       setConfirmation("User removed from friends list!");
     } catch (err) {
-      setError("Failed to remove friend. Please try again."); // Display an error message
-      setConfirmation(null);
+      setError("Failed to remove friend. Please try again.");
     }
   };
 
@@ -111,14 +191,6 @@ const AdminFriendsList = () => {
     }
   };
 
-  const closeError = () => {
-    setError(null); // Clear the error message
-  };
-
-  const closeConfirmation = () => {
-    setConfirmation(null); // Clear the error message
-  };
-
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedFriend) return;
     const chatId = [user.email, selectedFriend].sort().join("_");
@@ -131,14 +203,26 @@ const AdminFriendsList = () => {
     setNewMessage("");
   };
 
+  const closeError = () => setError(null);
+  const closeConfirmation = () => setConfirmation(null);
   const CloseSearch = () => {
     setSearchResults([]);
     setSearchEmail("");
   };
-
   const CloseChat = () => {
     setSelectedFriend(null);
     setMessages([]);
+  };
+
+  const formatLastSeen = (timestamp, status) => {
+    if (status === "active") return "Online"; // No timestamp when active
+    if (!timestamp) return "Offline"; // No timestamp if null
+    const date = timestamp.toDate();
+    return `Last seen: ${formatDistanceToNow(date, { addSuffix: true })}`; // Show timestamp when inactive
+  };
+
+  const isOnline = (status) => {
+    return status === "active";
   };
 
   return (
@@ -160,6 +244,7 @@ const AdminFriendsList = () => {
           </li>
         ))}
       </ul>
+
       <h2>Friends</h2>
       <ul>
         {friends.length > 0 ? (
@@ -167,15 +252,43 @@ const AdminFriendsList = () => {
             <li
               className="Friends List"
               key={index}
-              onClick={() => selectFriend(friend)}
+              onClick={() => selectFriend(friend.email)}
             >
-              {friend}
+              {friend.email}{" "}
+              <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
             </li>
           ))
         ) : (
           <p>No friends added yet</p>
         )}
       </ul>
+
+      <h2>Registered Users</h2>
+      <ul>
+        {allUsers.length > 0 ? (
+          allUsers.map((registeredUser, index) => (
+            <li key={index}>
+              <span
+                style={{
+                  ...styles.statusDot,
+                  ...(isOnline(registeredUser.status)
+                    ? styles.online
+                    : styles.offline),
+                }}
+              ></span>
+              {registeredUser.email} - {registeredUser.role}{" "}
+              <span>
+                (
+                {formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
+                )
+              </span>
+            </li>
+          ))
+        ) : (
+          <p>No other registered users found</p>
+        )}
+      </ul>
+
       {error && (
         <div className="error-popup">
           <div className="error-content">
@@ -219,6 +332,7 @@ const AdminFriendsList = () => {
         </div>
       )}
       <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
+      {/* {user && <button onClick={handleLogout}>Logout</button>} */}
     </div>
   );
 };

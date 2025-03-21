@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../config/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./Login/Style.css";
 
@@ -24,6 +24,8 @@ const Register = () => {
       await setDoc(doc(db, "users", user.uid), {
         email: RegisterEmail,
         role: role,
+        lastSeen: serverTimestamp(),
+        status: "active",
       });
       navigate("/"); // Redirect to dashboard after login
     } catch (error) {
