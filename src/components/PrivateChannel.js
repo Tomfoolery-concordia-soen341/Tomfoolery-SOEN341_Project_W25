@@ -35,7 +35,7 @@ const PrivateChannel = () => {
             setMembers(channelSnap.data().members || []);
             setOwnerEmail(channelSnap.data().owner);
         }
-        if (ownerEmail === user.email) {
+        if (channelSnap.data().owner === user.email) {
             setOwner(true);
         } else {
             setOwner(false);
@@ -119,7 +119,7 @@ const PrivateChannel = () => {
                 <h3>Owner: {ownerEmail}</h3>
             </div> : null }
 
-            {(owner | admin) ? <div>
+            {(owner || admin) ? <div>
                 <h2>Members</h2>
                 <ul style={{listStyleType: "none", padding: 0}}>
                     {members.map((member, index) => (
@@ -128,7 +128,7 @@ const PrivateChannel = () => {
                 </ul>
             </div> : null }
 
-            {(owner | admin) ? <div>
+            {(owner || admin) ? <div>
                 <h3>Add Member</h3>
                 <div>
                     <select
