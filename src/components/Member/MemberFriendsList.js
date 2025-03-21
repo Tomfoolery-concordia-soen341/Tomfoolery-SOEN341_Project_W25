@@ -33,7 +33,7 @@ const MemberFriendsList = () => {
 
     useEffect(() => {
         fetchFriends();
-    }, [user,fetchFriends]);
+    }, [user]);
 
     //prevents permanent autoscrolling. only on send message and first time pressing on friend.
     useEffect(() => {
@@ -47,7 +47,7 @@ const MemberFriendsList = () => {
                 setFirstSelect(null)
             }
         }
-    }, [messages, selectedFriend,FirstSelect,newMessage]);
+    }, [messages, selectedFriend]);
     const fetchFriends = async () => {
         if (!user) return;
         const userSnapshot = await getDocs(

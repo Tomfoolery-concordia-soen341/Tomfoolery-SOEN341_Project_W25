@@ -118,7 +118,7 @@ const AdminChannel = () => {
     fetchUsers(); // Fetch the list of users
     sendMessage();
     retrieveMessages();
-  }, [fetchChannelData,retrieveMessages,sendMessage]);
+  }, []);
 
   const BackToDashboard = () => {
     navigate("/Admin");

@@ -14,7 +14,7 @@ const MemberDash = () => {
 
   useEffect(() => {
     fetchChannels();
-  }, [user,fetchChannels]); //it only gets triggered when user changes
+  }, [user]); //it only gets triggered when user changes
 
   const GoToFriendsList = () => {
     navigate("/Mfriends"); // Redirect to the friends list page
