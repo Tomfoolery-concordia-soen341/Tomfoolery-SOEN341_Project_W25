@@ -60,6 +60,11 @@ const AdminDash = () => {
   const GoToChannel = (channel) => {
     navigate(`/channelA/${channel.id}`, { state: { channel } });
   };
+
+  const GoToPrivChannel = (channel) => {
+    navigate(`/privchannel/${channel.id}`, { state: { channel } });
+  };
+
   const Logout = () => {
     signOut(auth).then(() => navigate("/"));
   };
