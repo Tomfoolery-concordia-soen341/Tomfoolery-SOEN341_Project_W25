@@ -10,6 +10,9 @@ import {createPortal} from "react-dom";
 const MemberDash = () => {
   const [user] = useAuthState(auth); //it listens to users authentication state
   const [channels, setChannels] = useState([]);
+  const [defaultChannels, setDefaultChannels] = useState([]);
+  const [privateChannels, setPrivateChannels] = useState([]);
+  const [dialogShow, setDialogShow] = useState(false);
 
   const navigate = useNavigate();
 
@@ -34,6 +37,23 @@ const MemberDash = () => {
       ...doc.data(),
     }));
     setChannels(channelList);
+
+      const qdefault = query(channelRef, where("isDefault", "==", true));
+      const defaultQuerySnapshot = await getDocs(qdefault);
+      const defaultChannelList = defaultQuerySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+      }));
+      setDefaultChannels(defaultChannelList);
+
+      const privChannelRef = collection(db, "privateChannels");
+      const qpriv = query(privChannelRef, where("members", "array-contains", user.email));
+      const privQuerySnapshot = await getDocs(qpriv);
+      const privChannelList = privQuerySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+      }))
+      setPrivateChannels(privChannelList);
   };
 
   const Logout = () => {
