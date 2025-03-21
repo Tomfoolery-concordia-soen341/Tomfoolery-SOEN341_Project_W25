@@ -43,6 +43,18 @@ export default function NewChannelPrompt({onClose}) {
         }
     };
 
+    const checkAdmin = async () => {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.data().role === "admin") {
+            setAdmin(true);
+        }
+    }
+
+    useEffect(() => {
+        checkAdmin();
+    })
+
     return (
         <div className = "modal">
             <p>
