@@ -5,6 +5,8 @@ import "./Modal.css"
 import {useAuthState} from "react-firebase-hooks/auth";
 
 export default function NewChannelPrompt({onClose}) {
+    const [user] = useAuthState(auth);
+    const [admin, setAdmin] = useState(false);
     const [channelName, setChannelName] = useState("");
     const [privacy, setPrivacy] = useState(false);
     const [def, setDef] = useState(false);
