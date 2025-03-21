@@ -20,6 +20,8 @@ import "./newChannelPrompt/Modal.css"
 const AdminDash = () => {
   const [user] = useAuthState(auth);
   const [channels, setChannels] = useState([]); // State to store the list of channels
+  const [defaultChannels, setDefaultChannels] = useState([]);
+  const [privateChannels, setPrivateChannels] = useState([]);
   const navigate = useNavigate();
   const [dialogShow, setDialogShow] = useState(false);
 
