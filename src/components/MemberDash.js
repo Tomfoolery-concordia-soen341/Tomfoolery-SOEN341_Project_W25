@@ -27,6 +27,10 @@ const MemberDash = () => {
     navigate(`/channelM/${channel.id}`, { state: { channel } });
   };
 
+  const GoToPrivChannel = (channel) => {
+      navigate(`/privchannel/${channel.id}`, { state: { channel } });
+  };
+
   const fetchChannels = async () => {
     if (!user) return;
     const channelRef = collection(db, "channels");
