@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 import "./Style.css";
 
@@ -18,10 +18,15 @@ const Login = () => {
       // Sign in with Firebase Authentication
       const result = await signInWithEmailAndPassword(auth, email, password);
 
-      // Fetch user role from Firestore
-      const userDocRef = doc(db, "users", result.user.uid);
-      const userDoc = await getDoc(userDocRef);
+      // Update lastSeen timestamp in Firestore
+      const userRef = doc(db, "users", result.user.uid);
+      await updateDoc(userRef, {
+        lastSeen: serverTimestamp(), // Set lastSeen to current server time
+        status: "active", // Set status to online
+      });
 
+      // Fetch user role from Firestore
+      const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.role === "admin") {
