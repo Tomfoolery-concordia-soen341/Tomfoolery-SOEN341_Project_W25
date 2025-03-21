@@ -10,6 +10,7 @@ import MemberChannel from "./components/MemberChannel";
 import MembersFriendsList from "./components/MemberFriendsList";
 import AdminsFriendsList from "./components/AdminFriendsList";
 import PrivateChannel from "./components/PrivateChannel";
+import OfflineFriendList from "./components/OfflineFriendList";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="/privchannel/:id" element={<PrivateChannel />} />
         <Route path="/Mfriends" element={<MembersFriendsList />} />
         <Route path="/channelM/:id" element={<MemberChannel />} />
+        <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
       </Routes>
     </Router>
   );

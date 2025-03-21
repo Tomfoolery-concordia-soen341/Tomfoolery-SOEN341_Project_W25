@@ -8,6 +8,8 @@ import {
   collection,
   query,
   where,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +21,8 @@ import "./dialogPrompts/Modal.css"
 
 const AdminDash = () => {
   const [user] = useAuthState(auth);
-  const [channels, setChannels] = useState([]); // State to store the list of channels
+
+  const [channels, setChannels] = useState([]);
   const [defaultChannels, setDefaultChannels] = useState([]);
   const [privateChannels, setPrivateChannels] = useState([]);
   const navigate = useNavigate();
@@ -53,10 +56,11 @@ const AdminDash = () => {
     }))
     setPrivateChannels(privChannelList);
   };
+
   const GoToFriendsList = () => {
     navigate("/Afriends"); // Redirect to the friends list page
   };
-  
+
   const GoToChannel = (channel) => {
     navigate(`/channelA/${channel.id}`, { state: { channel } });
   };
@@ -65,9 +69,23 @@ const AdminDash = () => {
     navigate(`/privchannel/${channel.id}`, { state: { channel } });
   };
 
-  const Logout = () => {
-    signOut(auth).then(() => navigate("/"));
+  const Logout = async () => {
+    if (!user) return;
+
+    const userRef = doc(db, "users", user.uid);
+    try {
+      await updateDoc(userRef, {
+        lastSeen: serverTimestamp(), // Optional: update lastSeen on logout
+        status: "inactive", // Set status to inactive
+      });
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("Failed to log out properly.");
+    }
   };
+
   const DeleteChannel = async (channelId) => {
     if (!channelId) {
       alert("Invalid channel ID.");
@@ -84,12 +102,12 @@ const AdminDash = () => {
     }
 
     const confirmDelete = window.confirm(
-      "do you really want to delete this channel?"
+      "Do you really want to delete this channel?"
     );
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, "channels", channelId)); // Delete the specific channel
+      await deleteDoc(doc(db, "channels", channelId));
       setChannels(channels.filter((channel) => channel.id !== channelId));
       alert("Channel deleted successfully.");
     } catch (error) {
@@ -97,6 +115,7 @@ const AdminDash = () => {
       alert("Failed to delete channel.");
     }
   };
+
   useEffect(() => {
     fetchChannels();
   }, [dialogShow]);
