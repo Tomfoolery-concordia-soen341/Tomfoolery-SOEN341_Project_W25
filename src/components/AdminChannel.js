@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp,} from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+  collection,
+  getDocs,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  arrayRemove,
+} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
@@ -12,11 +23,13 @@ const AdminChannel = () => {
   const [user] = useAuthState(auth);
   const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // List of all users
   const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [requestToUpdate, setRequestToUpdate] = useState(false);
 
 
   // Fetch the channel's data
@@ -25,6 +38,7 @@ const AdminChannel = () => {
     const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
+      setRequests(channelSnap.data().request || []);
       setIsDefault(channelSnap.data().isDefault);
     }
   };
@@ -115,12 +129,32 @@ const AdminChannel = () => {
     }
   };
 
+  const acceptRequest = async (requester) => {
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, {
+      members: arrayUnion(requester),
+      request: arrayRemove(requester),
+    });
+    alert(`Accepted ${requester} to ${channel.name}`);
+    setRequestToUpdate(true);
+  }
+
+  const deleteRequest = async (requester) => {
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, {
+      request: arrayRemove(requester),
+    });
+    alert(`Rejected ${requester} request for ${channel.name}`);
+    setRequestToUpdate(true);
+  }
+
   useEffect(() => {
     fetchChannelData();
     fetchUsers(); // Fetch the list of users
     sendMessage();
     retrieveMessages();
-  }, []);
+    setRequestToUpdate(false);
+  }, [requestToUpdate]);
 
   const BackToDashboard = () => {
     navigate("/Admin");
@@ -138,6 +172,21 @@ const AdminChannel = () => {
           <ul style={{listStyleType: "none", padding: 0}}>
             {members.map((member, index) => (
                 <li key={index}>{member}</li>
+            ))}
+          </ul>
+          <h3>Requests</h3>
+          <ul style={{listStyleType: "none", padding: 0}}>
+            {requests.map((member, index) => (
+                <li key={index}>{member}
+                  <button onClick = {(e) => {
+                  e.stopPropagation();
+                  acceptRequest(member);
+                }}> Accept </button>
+                  <button onClick = {(e) => {
+                    e.stopPropagation();
+                    deleteRequest(member);
+                  }}> Delete </button>
+                </li>
             ))}
           </ul>
         </div> : null }

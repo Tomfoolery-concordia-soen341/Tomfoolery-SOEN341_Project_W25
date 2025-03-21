@@ -29,7 +29,7 @@ const AdminDash = () => {
   const fetchChannels = async () => {
     const channelRef = collection(db, "channels");
     const qndefault = query(channelRef, where("isDefault", "!=", true));
-    const querySnapshot = await getDocs(qndefault);
+    const querySnapshot = await getDocs(channelRef);
     const channelList = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
