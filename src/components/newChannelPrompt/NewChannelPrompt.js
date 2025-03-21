@@ -16,21 +16,27 @@ export default function NewChannelPrompt({onClose}) {
             const channelRef = collection(db, "channels");
             const q = query(channelRef, where("name", "==", channelName));
             const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                if (!privacy) {
-                    const newChannel = await addDoc(channelRef, {
-                        name: channelName,
-                        members: [], // Initialize with an empty members array
-                        isPrivate: privacy,
-                        isDefault: def,
-                    });
-                } else {
-                    const newChannel = await addDoc(channelRef, {
-                        name: channelName,
-                        members: [], // Initialize with an empty members array
-                        isPrivate: privacy,
-                    });
-                }
+
+            const privChannelRef = collection(db, "privateChannels");
+            const p = query(privChannelRef, where("name", "==", channelName));
+            const privQuerySnapshot = await getDocs(p);
+
+            //to regular channels
+            if (querySnapshot.empty && !privacy && admin) {
+                const newChannel = await addDoc(channelRef, {
+                    name: channelName,
+                    members: [user.email], // Initialize with an empty members array
+                    isDefault: def,
+                });
+
+            //to private channels
+            } else if (privQuerySnapshot.empty && (privacy || !admin)) {
+                const newChannel = await addDoc(privChannelRef, {
+                    name: channelName,
+                    owner: user.email,
+                    members: [user.email], // Initialize with an empty members array
+                });
+
             } else {
                 alert("Channel already exists");
             }
