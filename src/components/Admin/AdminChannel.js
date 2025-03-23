@@ -4,9 +4,8 @@ import {
   doc,
   updateDoc,
   arrayUnion,
-  getDoc,
-  collection,
   getDocs,
+  collection,
   onSnapshot,
   addDoc,
   serverTimestamp,
@@ -48,7 +47,7 @@ const AdminChannel = () => {
   // Fetch the channel's data
   const fetchChannelData = async () => {
     const channelRef = doc(db, "channels", channel.id);
-    const channelSnap = await getDoc(channelRef);
+    const channelSnap = await getDocs(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
       setRequests(channelSnap.data().request || []);
@@ -137,7 +136,7 @@ const AdminChannel = () => {
     }
 
     const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
+    const userSnap = await getDocs(userRef);
 
     if (!userSnap.exists() || userSnap.data().role !== "admin") {
       alert("Stop trying already, you're not an Admin!");
