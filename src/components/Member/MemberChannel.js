@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // Add useRef
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   doc,
@@ -23,6 +23,19 @@ const MemberChannel = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const navigate = useNavigate();
+
+  // Create a ref for the chat messages container
+  const messagesEndRef = useRef(null);
+
+  // Function to scroll to the bottom of the chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch channel members
   const fetchChannelData = async () => {
@@ -185,7 +198,7 @@ const MemberChannel = () => {
             }}
             onMouseOver={(e) => (e.target.style.backgroundColor = "#677bc4")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#7289da")}
-          >
+            >
             Back to Dashboard
           </button>
         </div>
@@ -237,6 +250,8 @@ const MemberChannel = () => {
               </div>
             </div>
           ))}
+          {/* Empty div to act as the scroll target */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Message Input */}
