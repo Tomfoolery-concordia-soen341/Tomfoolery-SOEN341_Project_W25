@@ -11,6 +11,7 @@ import MembersFriendsList from "./components/Member/MemberFriendsList";
 import AdminsFriendsList from "./components/Admin/AdminFriendsList";
 import PrivateChannel from "./components/PrivateChannel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
+import "bulma/css/bulma.min.css";
 
 function App() {
   return (

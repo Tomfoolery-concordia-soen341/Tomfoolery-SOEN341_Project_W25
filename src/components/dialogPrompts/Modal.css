@@ -1,20 +1,42 @@
-.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    padding: 20px;
-    z-index: 999;
-    border-radius: 0.5rem;
-}
-
-.overlay {
+/* Modal.css */
+.modal.is-active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-background {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-}
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    z-index: 1000; /* Ensure it appears above other content */
+  }
+  
+  .modal-card {
+    background-color: #36393f; /* Discord-like dark theme */
+    color: #fff;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    z-index: 1001; /* Ensure the modal card appears above the background */
+  }
+  
+  .modal-card-head,
+  .modal-card-body,
+  .modal-card-foot {
+    padding: 20px;
+  }
+  
+  .modal-card-head {
+    border-bottom: 1px solid #40444b;
+  }
+  
+  .modal-card-foot {
+    border-top: 1px solid #40444b;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
