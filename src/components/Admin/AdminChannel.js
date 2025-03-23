@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // Add useRef
 import { useLocation } from "react-router-dom";
 import {
   doc,
@@ -31,6 +31,19 @@ const AdminChannel = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [requestToUpdate, setRequestToUpdate] = useState(false);
+
+  // Create a ref for the chat messages container
+  const messagesEndRef = useRef(null);
+
+  // Function to scroll to the bottom of the chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch the channel's data
   const fetchChannelData = async () => {
@@ -154,7 +167,7 @@ const AdminChannel = () => {
     });
     alert(`Accepted ${requester} to ${channel.name}`);
     setRequestToUpdate(true);
-  }
+  };
 
   const deleteRequest = async (requester) => {
     const channelRef = doc(db, "channels", channel.id);
@@ -163,7 +176,7 @@ const AdminChannel = () => {
     });
     alert(`Rejected ${requester} request for ${channel.name}`);
     setRequestToUpdate(true);
-  }
+  };
 
   useEffect(() => {
     fetchChannelData();
@@ -453,6 +466,8 @@ const AdminChannel = () => {
               </button>
             </div>
           ))}
+          {/* Empty div to act as the scroll target */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Message Input */}
