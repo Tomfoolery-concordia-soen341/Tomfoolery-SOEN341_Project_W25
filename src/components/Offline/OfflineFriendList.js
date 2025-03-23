@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "../config/firebase"; // Adjust path to your firebase config
+import { db, auth } from "../../config/firebase"; // Adjust path to your firebase config
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./OfflineFriendList.css"; // Reuse or create styles as needed

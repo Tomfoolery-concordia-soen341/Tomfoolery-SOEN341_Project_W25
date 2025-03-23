@@ -1,22 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { auth, db } from "../config/firebase";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  doc,
-  updateDoc,
-  arrayUnion,
-  addDoc,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-  arrayRemove,
-} from "firebase/firestore";
+import React, { useEffect, useState, useRef } from "react";
+import { auth, db } from "../../config/firebase";
+import {collection, getDocs, query, where, doc, updateDoc, arrayUnion, addDoc, orderBy, onSnapshot, serverTimestamp, arrayRemove,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import ContextMenu from "../ContextMenu/ContextMenu";
+import "../ContextMenu/ContextMenu.css";
+import "./MemberFriendsList.css";
+
 
 const styles = {
   statusDot: {
@@ -48,6 +39,20 @@ const MemberFriendsList = () => {
   const [error, setError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
 
+  // sprint 3 vars
+  const contextMenuRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const [FirstSelect, setFirstSelect] = useState(null);
+  const [quotedMessage, setQuotedMessage] = useState(null); // State for quoted message
+  const [contextMenu, setContextMenu] = useState({
+    position: {
+      x: 0,
+      y: 0,
+    },
+    toggled: false,
+    message: null, // Track the right-clicked message
+  });
+
   useEffect(() => {
     if (loading) return;
     if (user) {
@@ -74,6 +79,20 @@ const MemberFriendsList = () => {
       status: "active", // Set status to active on login
     });
   };
+
+  //prevents permanent auto-scrolling. only on send message and first time pressing on friend.
+  useEffect(() => {
+    if (chatEndRef.current) {
+      if (selectedFriend && newMessage) {
+        chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "smooth" : "smooth"});
+      }
+      if (FirstSelect) {
+
+        chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "smooth" : "smooth"});
+        setFirstSelect(null)
+      }
+    }
+  }, [messages, selectedFriend]);
 
   const fetchFriends = async () => {
     if (!user) return;
@@ -204,11 +223,12 @@ const MemberFriendsList = () => {
       setSelectedFriend(null);
     } else {
       setSelectedFriend(friend);
+      setFirstSelect(friend)
       const chatId = [user.email, friend].sort().join("_");
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, orderBy("timestamp"));
       onSnapshot(q, (snapshot) => {
-        setMessages(snapshot.docs.map((doc) => doc.data()));
+        setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       });
     }
   };
@@ -221,8 +241,15 @@ const MemberFriendsList = () => {
       text: newMessage,
       sender: user.email,
       timestamp: serverTimestamp(),
+      quotedMessage: quotedMessage
+          ? {
+            sender: quotedMessage.sender,
+            text: quotedMessage.text,
+          }
+          : null, // Include quoted message details
     });
     setNewMessage("");
+    setQuotedMessage(null); // Clear quoted message after sending
   };
 
   const markOfflineMessageAsRead = async (messageId) => {
@@ -251,9 +278,98 @@ const MemberFriendsList = () => {
   const isOnline = (status) => {
     return status === "active";
   };
+    const handleOnContextMenu = (e, rightClick) => {
+        e.preventDefault();
+
+        if (!contextMenuRef.current) {
+            console.error("Context menu ref is not assigned.");
+            return;
+        }
+
+        const contextMenuAttr = contextMenuRef.current.getBoundingClientRect();
+        const isLeft = e.clientX < window?.innerWidth / 2;
+        let x;
+        let y = e.clientY;
+
+        if (isLeft) {
+            x = e.clientX;
+        } else {
+            x = e.clientX - contextMenuAttr.width;
+        }
+
+        setContextMenu({
+            position: {
+                x,
+                y,
+            },
+            toggled: true,
+            message: rightClick, // Pass the right-clicked message
+        });
+
+        // Update the messages state to highlight the selected message
+        setMessages((prevMessages) =>
+            prevMessages.map((message) => ({
+                ...message,
+                selected: message.id === rightClick.id, // Highlight the selected message
+            }))
+        );
+
+        console.log("Context menu toggled:", true); // Debug log
+        console.log("Right-clicked item:", rightClick);
+    };
+
+    const resetContextMenu = () => {
+        setMessages((prevMessages) =>
+            prevMessages.map((message) => ({
+                ...message,
+                selected: false, // Remove highlight from all messages
+            }))
+        );
+
+        setContextMenu({
+            position: {
+                x: 0,
+                y: 0,
+            },
+            toggled: false,
+            message: null, // Clear the right-clicked message
+        });
+    };
+
+    useEffect(() => {
+        function handler(e) {
+            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+                resetContextMenu();
+            }
+        }
+
+        document.addEventListener("click", handler);
+
+        return () => {
+            document.removeEventListener("click", handler);
+        };
+    }, [contextMenu.toggled]); // Re-attach the listener when the menu is toggled
 
   return (
     <div>
+        <ContextMenu
+            contextMenuRef={contextMenuRef}
+            isToggled={contextMenu.toggled}
+            positionX={contextMenu.position.x}
+            positionY={contextMenu.position.y}
+            message={contextMenu.message} // Pass the right-clicked message
+            buttons={[
+                {
+                    text: "Reply",
+                    icon: "",
+                    onClick: () => {
+                        setQuotedMessage(contextMenu.message); // Set the quoted message
+                        resetContextMenu(); // Close the context menu
+                    },
+                    isSpacer: false,
+                },
+            ]}
+        />
       <h2>Add Friends</h2>
       <input
         value={searchEmail}
@@ -290,47 +406,6 @@ const MemberFriendsList = () => {
         )}
       </ul>
 
-      <h2>Registered Users</h2>
-      <ul>
-        {allUsers.length > 0 ? (
-          allUsers.map((registeredUser, index) => (
-            <li key={index}>
-              <span
-                style={{
-                  ...styles.statusDot,
-                  ...(isOnline(registeredUser.status)
-                    ? styles.online
-                    : styles.offline),
-                }}
-              ></span>
-              {registeredUser.email} - {registeredUser.role}{" "}
-              <span>
-                ({formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
-                )
-              </span>
-            </li>
-          ))
-        ) : (
-          <p>No other registered users found</p>
-        )}
-      </ul>
-
-      <h2>Offline Messages</h2>
-      {offlineMessages.length > 0 ? (
-        <ul>
-          {offlineMessages.map((msg) => (
-            <li key={msg.id}>
-              <strong>From: {msg.sender}</strong> - {msg.text}{" "}
-              <button onClick={() => markOfflineMessageAsRead(msg.id)}>
-                Mark as Read
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No offline messages.</p>
-      )}
-
       {error && (
         <div className="error-popup">
           <div className="error-content">
@@ -349,16 +424,38 @@ const MemberFriendsList = () => {
           </div>
         </div>
       )}
-      {selectedFriend && (
+        {selectedFriend && (
         <div>
-          <h2>Chat with {selectedFriend}</h2>
-          <div className="chat-window">
-            {messages.map((msg, index) => (
-              <p key={index}>
-                <strong>{msg.sender}:</strong> {msg.text}
-              </p>
-            ))}
-          </div>
+        <h2>Chat with {selectedFriend}</h2>
+        <div className="chat-container">
+            <ul className="chat-window">
+                {messages.map((msg, index) => (
+                    <li
+                        key={index}
+                        onContextMenu={(e) => handleOnContextMenu(e, msg)}
+                        className={msg.selected ? "selected" : ""}
+                    >
+                        <strong>{msg.sender}:</strong> {msg.text}
+                        {msg.quotedMessage && (
+                            <div className="quoted-message">
+                                <p>
+                                    <strong>Quoting {msg.quotedMessage.sender}:</strong> {msg.quotedMessage.text}
+                                </p>
+                            </div>
+                        )}
+                    </li>
+                ))}
+                <div ref={chatEndRef}></div>
+            </ul>
+        </div>
+        {quotedMessage && (
+            <div className="quoted-message">
+                <p>
+                    <strong>Quoting {quotedMessage.sender}:</strong> {quotedMessage.text}
+                </p>
+                <button onClick={() => setQuotedMessage(null)}>Remove Quote</button>
+            </div>
+            )}
           <input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -373,6 +470,46 @@ const MemberFriendsList = () => {
           </p>
         </div>
       )}
+        <h2>Registered Users</h2>
+        <ul>
+            {allUsers.length > 0 ? (
+                allUsers.map((registeredUser, index) => (
+                    <li key={index}>
+              <span
+                  style={{
+                      ...styles.statusDot,
+                      ...(isOnline(registeredUser.status)
+                          ? styles.online
+                          : styles.offline),
+                  }}
+              ></span>
+                        {registeredUser.email} - {registeredUser.role}{" "}
+                        <span>
+                ({formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
+                            )
+              </span>
+                    </li>
+                ))
+            ) : (
+                <p>No other registered users found</p>
+            )}
+        </ul>
+
+        <h2>Offline Messages</h2>
+        {offlineMessages.length > 0 ? (
+            <ul>
+                {offlineMessages.map((msg) => (
+                    <li key={msg.id}>
+                        <strong>From: {msg.sender}</strong> - {msg.text}{" "}
+                        <button onClick={() => markOfflineMessageAsRead(msg.id)}>
+                            Mark as Read
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <p>No offline messages.</p>
+        )}
       <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
     </div>
   );

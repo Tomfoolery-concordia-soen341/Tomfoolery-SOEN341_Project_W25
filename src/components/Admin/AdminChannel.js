@@ -11,22 +11,26 @@ import {
   addDoc,
   serverTimestamp,
   deleteDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
 
 const AdminChannel = () => {
   const { state } = useLocation();
   const { channel } = state;
   const [user] = useAuthState(auth);
+  const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // List of all users
   const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [requestToUpdate, setRequestToUpdate] = useState(false);
 
   // Fetch the channel's data
   const fetchChannelData = async () => {
@@ -34,6 +38,8 @@ const AdminChannel = () => {
     const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
+      setRequests(channelSnap.data().request || []);
+      setIsDefault(channelSnap.data().isDefault);
     }
   };
 
@@ -140,11 +146,31 @@ const AdminChannel = () => {
     }
   };
 
+  const acceptRequest = async (requester) => {
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, {
+      members: arrayUnion(requester),
+      request: arrayRemove(requester),
+    });
+    alert(`Accepted ${requester} to ${channel.name}`);
+    setRequestToUpdate(true);
+  }
+
+  const deleteRequest = async (requester) => {
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, {
+      request: arrayRemove(requester),
+    });
+    alert(`Rejected ${requester} request for ${channel.name}`);
+    setRequestToUpdate(true);
+  }
+
   useEffect(() => {
     fetchChannelData();
     fetchUsers(); // Fetch the list of users
     retrieveMessages();
-  }, []);
+    setRequestToUpdate(false);
+  }, [requestToUpdate]);
 
   const BackToDashboard = () => {
     navigate("/Admin");
@@ -204,6 +230,63 @@ const AdminChannel = () => {
               ))}
             </ul>
           </div>
+
+          {/* Requests Section */}
+          {!isDefault && (
+            <div style={{ marginBottom: "16px" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "8px" }}>
+                Requests
+              </h2>
+              <ul style={{ listStyle: "none", padding: "0" }}>
+                {requests.map((requester, index) => (
+                  <li
+                    key={index}
+                    style={{ fontSize: "14px", color: "#b9bbbe", marginBottom: "4px" }}
+                  >
+                    {requester}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        acceptRequest(requester);
+                      }}
+                      style={{
+                        backgroundColor: "#7289da",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        padding: "4px 8px",
+                        marginLeft: "8px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        transition: "background 0.3s ease",
+                      }}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteRequest(requester);
+                      }}
+                      style={{
+                        backgroundColor: "#ff416c",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        padding: "4px 8px",
+                        marginLeft: "8px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        transition: "background 0.3s ease",
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Bottom Section */}

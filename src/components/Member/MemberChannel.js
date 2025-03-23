@@ -8,12 +8,17 @@ import {
   onSnapshot,
   serverTimestamp,
   getDocs,
+  updateDoc,
+  arrayRemove,
 } from "firebase/firestore";
-import { db, auth } from "../config/firebase";
+import { db, auth } from "../../config/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const MemberChannel = () => {
   const { state } = useLocation();
   const { channel } = state;
+  const [user] = useAuthState(auth);
+  const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -25,18 +30,8 @@ const MemberChannel = () => {
     const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
+      setIsDefault(channelSnap.data().isDefault);
     }
-  };
-
-  // Fetch all users
-  const fetchUsers = async () => {
-    const usersRef = collection(db, "users");
-    const querySnapshot = await getDocs(usersRef);
-    const users = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    // setAllUsers(users); // Uncomment if you need to use allUsers
   };
 
   // Listen for chat messages
@@ -83,15 +78,25 @@ const MemberChannel = () => {
     }
   };
 
-  useEffect(() => {
-    fetchChannelData();
-    listenForMessages();
-    fetchUsers();
-  }, []);
+  // Leave channel
+  const leaveChannel = async () => {
+    const confirm = window.confirm("Do you want to leave this channel?");
+    if (!confirm) return;
+
+    const channelRef = doc(db, "channels", channel.id);
+    await updateDoc(channelRef, { members: arrayRemove(user.email) }).then(() => {
+      BackToDashboard();
+    });
+  };
 
   const BackToDashboard = () => {
     navigate("/Member");
   };
+
+  useEffect(() => {
+    fetchChannelData();
+    listenForMessages();
+  }, []);
 
   return (
     <div
@@ -141,6 +146,29 @@ const MemberChannel = () => {
 
         {/* Bottom Section */}
         <div>
+          {/* Leave Channel Button */}
+          {!isDefault && (
+            <button
+              onClick={leaveChannel}
+              style={{
+                width: "100%",
+                backgroundColor: "#ff416c",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                padding: "8px",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "background 0.3s ease",
+                marginBottom: "8px",
+              }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#ff4b2b")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#ff416c")}
+            >
+              Leave Channel
+            </button>
+          )}
+
           {/* Back to Dashboard Button */}
           <button
             onClick={BackToDashboard}
