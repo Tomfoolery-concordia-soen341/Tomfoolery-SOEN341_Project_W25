@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp,} from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+  collection,
+  getDocs,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  deleteDoc,
+} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import {auth, db} from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { deleteDoc } from "firebase/firestore";
 
 const AdminChannel = () => {
   const { state } = useLocation();
@@ -13,10 +23,10 @@ const AdminChannel = () => {
   const [members, setMembers] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // List of all users
   const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-
 
   // Fetch the channel's data
   const fetchChannelData = async () => {
@@ -51,9 +61,11 @@ const AdminChannel = () => {
     });
 
     setMembers((prev) => [...prev, selectedMember]); // Update local members state
-    setSelectedMember(""); // Clear dropdown
+    setSelectedMember(""); // Clear dropdown selection
+    setIsDropdownOpen(false); // Close the dropdown
     alert(`Added ${selectedMember} to ${channel.name}`);
   };
+
   // Listen for chat messages
   const retrieveMessages = () => {
     const messagesRef = collection(db, "channels", channel.id, "messages");
@@ -63,7 +75,16 @@ const AdminChannel = () => {
         id: doc.id, // Include the document ID
         ...doc.data(), // Include the document data
       }));
-      setMessages(messagesData); // Update state with messages
+
+      // Sort messages by timestamp in ascending order
+      const sortedMessages = messagesData.sort((a, b) => {
+        if (a.timestamp && b.timestamp) {
+          return a.timestamp.toDate() - b.timestamp.toDate();
+        }
+        return 0; // Fallback if timestamps are missing
+      });
+
+      setMessages(sortedMessages); // Update state with sorted messages
     });
   };
 
@@ -75,16 +96,23 @@ const AdminChannel = () => {
     await addDoc(messagesRef, {
       text: newMessage,
       sender: auth.currentUser.email,
-      timestamp: serverTimestamp(),
+      timestamp: serverTimestamp(), // Add a server-side timestamp
     });
 
     setNewMessage(""); // Clear input after sending
   };
 
-  const DeleteMessage = async (messageId) => { // No need for channelId parameter
-    if (!messageId || !channel) { // Check selectedChannel
-      console.log (messageId)
-      console.log (channel)
+  // Handle Enter key press
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Prevent default behavior (e.g., new line in input)
+      sendMessage(); // Send the message
+    }
+  };
+
+  // Delete message
+  const DeleteMessage = async (messageId) => {
+    if (!messageId || !channel) {
       alert("Invalid message or channel ID.");
       return;
     }
@@ -98,16 +126,15 @@ const AdminChannel = () => {
     }
 
     const confirmDelete = window.confirm(
-        "Do you commit to the sins of deleting this message???????"
+      "Do you commit to the sins of deleting this message???????"
     );
     if (!confirmDelete) return;
 
     try {
-      // Use selectedChannel.id to get the channel ID
       await deleteDoc(doc(db, `channels/${channel.id}/messages`, messageId));
       setMessages(messages.filter((message) => message.id !== messageId));
       alert("Message deleted successfully.");
-    } catch (error) { // Corrected the catch block
+    } catch (error) {
       console.error("Error deleting message:", error);
       alert("Failed to delete message.");
     }
@@ -116,7 +143,6 @@ const AdminChannel = () => {
   useEffect(() => {
     fetchChannelData();
     fetchUsers(); // Fetch the list of users
-    sendMessage();
     retrieveMessages();
   }, []);
 
@@ -125,61 +151,273 @@ const AdminChannel = () => {
   };
 
   return (
-      <div>
-        <h1> Channel: {channel.name}</h1>
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        backgroundColor: "#36393f",
+        color: "#fff",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      {/* Sidebar */}
+      <div
+        style={{
+          width: "240px",
+          backgroundColor: "#2f3136",
+          padding: "16px",
+          borderRight: "1px solid #202225",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between", // Push buttons to the bottom
+        }}
+      >
+        {/* Top Section */}
         <div>
-          Admin Permissions ON
-        </div>
-        <div>
-          <h2>Members</h2>
-          <ul style={{listStyleType: "none", padding: 0}}>
-            {members.map((member, index) => (
-                <li key={index}>{member}</li>
-            ))}
-          </ul>
+          <h1 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}>
+            Channel: {channel.name}
+          </h1>
+          <div
+            style={{
+              backgroundColor: "#40444b",
+              padding: "8px",
+              borderRadius: "4px",
+              marginBottom: "16px",
+            }}
+          >
+            <p style={{ fontSize: "14px", color: "#b9bbbe" }}>Admin Permissions ON</p>
+          </div>
+
+          {/* Members Section */}
+          <div style={{ marginBottom: "16px" }}>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "8px" }}>
+              Members
+            </h2>
+            <ul style={{ listStyle: "none", padding: "0" }}>
+              {members.map((member, index) => (
+                <li
+                  key={index}
+                  style={{ fontSize: "14px", color: "#b9bbbe", marginBottom: "4px" }}
+                >
+                  {member}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
+        {/* Bottom Section */}
         <div>
-          <h3>Add Member</h3>
-          <div>
-            <select
-                value={selectedMember}
-                onChange={(e) => setSelectedMember(e.target.value)}
+          {/* Add Member Section */}
+          <div style={{ marginBottom: "16px" }}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={{
+                width: "100%",
+                backgroundColor: "#7289da",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                padding: "8px",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "background 0.3s ease",
+              }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#677bc4")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#7289da")}
             >
-              <option value="">Select a member</option>
-              {allUsers
-                  .filter((user) => !members.includes(user.email)) // Filter out already-added members
-                  .map((user) => (
+              Add Member
+            </button>
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div
+                style={{
+                  marginTop: "8px",
+                  backgroundColor: "#40444b",
+                  borderRadius: "4px",
+                  padding: "8px",
+                }}
+              >
+                <select
+                  value={selectedMember}
+                  onChange={(e) => setSelectedMember(e.target.value)}
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#36393f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "8px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <option value="">Select a member</option>
+                  {allUsers
+                    .filter((user) => !members.includes(user.email)) // Filter out already-added members
+                    .map((user) => (
                       <option key={user.id} value={user.email}>
                         {user.email}
                       </option>
-                  ))}
-            </select>
-            <button onClick={addMember}>Add Member</button>
+                    ))}
+                </select>
+                <button
+                  onClick={addMember}
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#7289da",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "8px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "background 0.3s ease",
+                    marginTop: "8px",
+                  }}
+                  onMouseOver={(e) => (e.target.style.backgroundColor = "#677bc4")}
+                  onMouseOut={(e) => (e.target.style.backgroundColor = "#7289da")}
+                >
+                  Add Selected Member
+                </button>
+              </div>
+            )}
           </div>
-          <button onClick={BackToDashboard}>Go back to Dashboard</button>
+
+          {/* Back to Dashboard Button */}
+          <button
+            onClick={BackToDashboard}
+            style={{
+              width: "100%",
+              backgroundColor: "#7289da",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              padding: "8px",
+              fontSize: "14px",
+              cursor: "pointer",
+              transition: "background 0.3s ease",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#677bc4")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#7289da")}
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#36393f",
+        }}
+      >
+        {/* Chat Messages */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px",
+            backgroundColor: "#36393f",
+          }}
+        >
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              style={{
+                marginBottom: "16px",
+                display: "flex",
+                alignItems: "flex-start",
+                width: "100%",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "#40444b",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  width: "100%",
+                  maxWidth: "100%",
+                }}
+              >
+                <strong style={{ color: "#7289da", fontSize: "14px" }}>
+                  {msg.sender}:
+                </strong>
+                <p style={{ color: "#fff", fontSize: "14px", margin: "4px 0 0 0" }}>
+                  {msg.text}
+                </p>
+              </div>
+              <button
+                onClick={() => DeleteMessage(msg.id)}
+                style={{
+                  backgroundColor: "#ff416c",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  padding: "4px 8px",
+                  marginLeft: "8px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  transition: "background 0.3s ease",
+                }}
+                onMouseOver={(e) => (e.target.backgroundColor = "#ff4b2b")}
+                onMouseOut={(e) => (e.target.backgroundColor = "#ff416c")}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
         </div>
 
-        {/* Chat Section */}
-        <div>
-          <h2>Chat</h2>
-          <div className="chat-window">
-            {messages.map((msg, index) => (
-                <p key={index}>
-                  <strong>{msg.sender}:</strong> {msg.text}
-                  <button onClick={() => DeleteMessage(msg.id)}>Delete</button>
-                </p>
-            ))}
-          </div>
-          <input
+        {/* Message Input */}
+        <div
+          style={{
+            padding: "16px",
+            backgroundColor: "#40444b",
+            borderTop: "1px solid #202225",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown} // Add keydown event listener
               placeholder="Type a message..."
-          />
-          <button onClick={sendMessage}>Send</button>
+              style={{
+                flex: 1,
+                backgroundColor: "#36393f",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                padding: "8px 12px",
+                fontSize: "14px",
+                marginRight: "8px",
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              style={{
+                backgroundColor: "#7289da",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                padding: "8px 16px",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "background 0.3s ease",
+              }}
+              onMouseOver={(e) => (e.target.backgroundColor = "#677bc4")}
+              onMouseOut={(e) => (e.target.backgroundColor = "#7289da")}
+            >
+              Send
+            </button>
+          </div>
         </div>
-        <button onClick={BackToDashboard}>Go back to Dashboard</button>
       </div>
+    </div>
   );
 };
 

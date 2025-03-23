@@ -10,6 +10,7 @@ import MemberChannel from "./components/MemberChannel";
 import MembersFriendsList from "./components/MemberFriendsList";
 import AdminsFriendsList from "./components/AdminFriendsList";
 import OfflineFriendList from "./components/OfflineFriendList";
+import "bulma/css/bulma.min.css";
 function App() {
   return (
     <Router>
