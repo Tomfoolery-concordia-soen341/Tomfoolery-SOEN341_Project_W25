@@ -4,6 +4,7 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  getDoc,
   getDocs,
   collection,
   onSnapshot,
@@ -47,7 +48,7 @@ const AdminChannel = () => {
   // Fetch the channel's data
   const fetchChannelData = async () => {
     const channelRef = doc(db, "channels", channel.id);
-    const channelSnap = await getDocs(channelRef);
+    const channelSnap = await getDoc(channelRef);
     if (channelSnap.exists()) {
       setMembers(channelSnap.data().members || []);
       setRequests(channelSnap.data().request || []);
