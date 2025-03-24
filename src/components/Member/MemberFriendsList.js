@@ -39,7 +39,7 @@ const MemberFriendsList = () => {
   const [error, setError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
 
-  // sprint 3 vars
+  // context menu vars
   const contextMenuRef = useRef(null);
   const chatEndRef = useRef(null);
   const [FirstSelect, setFirstSelect] = useState(null);
@@ -56,8 +56,7 @@ const MemberFriendsList = () => {
   useEffect(() => {
     if (loading) return;
     if (user) {
-      updateLastSeen();
-      fetchFriends();
+      updateLastSeen().then(r =>   fetchFriends());
       const unsubscribeFriends = fetchAllUsers(); // Fetch registered users
       const unsubscribeOffline = fetchOfflineMessages();
       return () => {
@@ -68,7 +67,7 @@ const MemberFriendsList = () => {
   }, [user, loading]);
 
   const ReturnHomePage = () => {
-    navigate("/Member");
+    navigate("/Dashboard");
   };
 
   const updateLastSeen = async () => {
@@ -258,11 +257,14 @@ const MemberFriendsList = () => {
   };
 
   const closeError = () => setError(null);
+
   const closeConfirmation = () => setConfirmation(null);
+
   const CloseSearch = () => {
     setSearchResults([]);
     setSearchEmail("");
   };
+
   const CloseChat = () => {
     setSelectedFriend(null);
     setMessages([]);
@@ -278,7 +280,8 @@ const MemberFriendsList = () => {
   const isOnline = (status) => {
     return status === "active";
   };
-    const handleOnContextMenu = (e, rightClick) => {
+
+  const handleOnContextMenu = (e, rightClick) => {
         e.preventDefault();
 
         if (!contextMenuRef.current) {
@@ -318,7 +321,7 @@ const MemberFriendsList = () => {
         console.log("Right-clicked item:", rightClick);
     };
 
-    const resetContextMenu = () => {
+  const resetContextMenu = () => {
         setMessages((prevMessages) =>
             prevMessages.map((message) => ({
                 ...message,
@@ -336,19 +339,18 @@ const MemberFriendsList = () => {
         });
     };
 
-    useEffect(() => {
-        function handler(e) {
-            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
-                resetContextMenu();
-            }
-        }
+  useEffect(() => {
+      function handler(e) {
+          if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+              resetContextMenu();
+          }
+      }
 
-        document.addEventListener("click", handler);
-
+      document.addEventListener("click", handler);
         return () => {
-            document.removeEventListener("click", handler);
+          document.removeEventListener("click", handler);
         };
-    }, [contextMenu.toggled]); // Re-attach the listener when the menu is toggled
+      },[contextMenu.toggled]); // Re-attach the listener when the menu is toggled
 
   return (
     <div>
@@ -392,27 +394,36 @@ const MemberFriendsList = () => {
       <ul>
         {friends.length > 0 ? (
           friends.map((friend, index) => (
-            <li
-              className="Friends List"
-              key={index}
-              onClick={() => selectFriend(friend.email)}
-            >
-              {friend.email}{" "}
-              <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
-            </li>
+              <li
+                  className="Friends List"
+                  key={index}
+                  onClick={() => selectFriend(friend.email)}
+              >
+                <span
+                    style={{
+                        ...styles.statusDot,
+                        ...(isOnline(friend.status)
+                            ? styles.online
+                            : styles.offline),
+                    }}
+                >
+                </span>
+                  {friend.email}{" "}
+                  <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
+              </li>
           ))
         ) : (
-          <p>No friends added yet</p>
+            <p>No friends added yet</p>
         )}
       </ul>
 
-      {error && (
-        <div className="error-popup">
-          <div className="error-content">
-            <h3>Error</h3>
-            <p>{error}</p>
-            <button onClick={closeError}>Close</button>
-          </div>
+        {error && (
+            <div className="error-popup">
+                <div className="error-content">
+                    <h3>Error</h3>
+                    <p>{error}</p>
+                    <button onClick={closeError}>Close</button>
+                </div>
         </div>
       )}
       {confirmation && (
@@ -470,31 +481,6 @@ const MemberFriendsList = () => {
           </p>
         </div>
       )}
-        <h2>Registered Users</h2>
-        <ul>
-            {allUsers.length > 0 ? (
-                allUsers.map((registeredUser, index) => (
-                    <li key={index}>
-              <span
-                  style={{
-                      ...styles.statusDot,
-                      ...(isOnline(registeredUser.status)
-                          ? styles.online
-                          : styles.offline),
-                  }}
-              ></span>
-                        {registeredUser.email} - {registeredUser.role}{" "}
-                        <span>
-                ({formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
-                            )
-              </span>
-                    </li>
-                ))
-            ) : (
-                <p>No other registered users found</p>
-            )}
-        </ul>
-
         <h2>Offline Messages</h2>
         {offlineMessages.length > 0 ? (
             <ul>

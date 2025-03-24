@@ -40,6 +40,7 @@ const AdminFriendsList = () => {
   const contextMenuRef = useRef(null);
   const chatEndRef = useRef(null);
   const [quotedMessage, setQuotedMessage] = useState(null); // State for quoted message
+
   const [contextMenu, setContextMenu] = useState({
     position: {
       x: 0,
@@ -49,12 +50,10 @@ const AdminFriendsList = () => {
     message: null, // Track the right-clicked message
   });
 
-
   useEffect(() => {
     if (loading) return;
     if (user) {
-      updateLastSeen();
-      fetchFriends();
+      updateLastSeen().then(r => fetchFriends());
       const unsubscribe = fetchAllUsers();
       return () => unsubscribe();
     }
@@ -66,7 +65,6 @@ const AdminFriendsList = () => {
         chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "smooth" : "smooth"});
       }
       if (FirstSelect) {
-
         chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "smooth" : "smooth"});
         setFirstSelect(null)
       }
@@ -74,7 +72,7 @@ const AdminFriendsList = () => {
   }, [messages, selectedFriend]);
 
   const ReturnHomePage = () => {
-    navigate("/Admin");
+    navigate("/Dashboard");
   };
 
   const updateLastSeen = async () => {
@@ -84,22 +82,6 @@ const AdminFriendsList = () => {
       lastSeen: serverTimestamp(),
       status: "active", // Set status to active when online
     });
-  };
-
-  const handleLogout = async () => {
-    if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-
-    try {
-      await updateDoc(userRef, {
-        lastSeen: serverTimestamp(), // Update lastSeen on logout
-        status: "inactive", // Set status to inactive
-      });
-      await auth.signOut();
-      navigate("/");
-    } catch (err) {
-      setError(`Logout failed: ${err.message}`);
-    }
   };
 
   const fetchFriends = async () => {
@@ -228,6 +210,7 @@ const AdminFriendsList = () => {
   };
 
   const closeError = () => setError(null);
+
   const closeConfirmation = () => setConfirmation(null);
   const CloseSearch = () => {
     setSearchResults([]);
@@ -369,6 +352,14 @@ const AdminFriendsList = () => {
                       key={index}
                       onClick={() => selectFriend(friend.email)}
                   >
+                    <span
+                        style={{
+                          ...styles.statusDot,
+                          ...(isOnline(friend.status)
+                              ? styles.online
+                              : styles.offline),
+                        }}
+                    ></span>
                     {friend.email}{" "}
                     <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
                   </li>
@@ -442,31 +433,6 @@ const AdminFriendsList = () => {
               </p>
             </div>
         )}
-        <h2>Registered Users</h2>
-        <ul>
-          {allUsers.length > 0 ? (
-              allUsers.map((registeredUser, index) => (
-                  <li key={index}>
-              <span
-                  style={{
-                    ...styles.statusDot,
-                    ...(isOnline(registeredUser.status)
-                        ? styles.online
-                        : styles.offline),
-                  }}
-              ></span>
-                    {registeredUser.email} - {registeredUser.role}{" "}
-                    <span>
-                (
-                      {formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
-                      )
-              </span>
-                  </li>
-              ))
-          ) : (
-              <p>No other registered users found</p>
-          )}
-        </ul>
         <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
         {/* {user && <button onClick={handleLogout}>Logout</button>} */}
       </div>

@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../../config/firebase";
 import { signOut } from "firebase/auth";
-import {
-  doc,
-  getDocs,
-  addDoc,
-  collection,
-  query,
-  where,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import {doc, getDocs, collection, query, where, updateDoc, serverTimestamp,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
@@ -27,6 +18,20 @@ const AdminDash = () => {
   const [privateChannels, setPrivateChannels] = useState([]);
   const navigate = useNavigate();
   const [dialogShow, setDialogShow] = useState(false);
+
+  //get channel vars
+  const [admin, setAdmin] = useState(false);
+  const [owner, setOwner] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [members, setMembers] = useState([]);
+
+  //get channel data
+  const fetchRoles = async () => {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.data().role === "admin") {
+      setAdmin(true);
+    }
+  }
 
   // Fetch all channels from Firestore
   const fetchChannels = async () => {
@@ -48,7 +53,6 @@ const AdminDash = () => {
     setDefaultChannels(defaultChannelList);
 
     const privChannelRef = collection(db, "privateChannels");
-    //const qpriv = query(privChannelRef, where("members", "array-contains", user.email));
     const privQuerySnapshot = await getDocs(privChannelRef);
     const privChannelList = privQuerySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -117,7 +121,8 @@ const AdminDash = () => {
   };
 
   useEffect(() => {
-    fetchChannels();
+    fetchRoles()
+        .then(r => fetchChannels());
   }, [dialogShow]);
 
   return (
@@ -167,14 +172,14 @@ const AdminDash = () => {
               className="ChannelA"
               onClick={() => GoToPrivChannel(channel)}
             >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  DeleteChannel(channel.id);
-                }}
+              {admin || owner ? <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    DeleteChannel(channel.id);
+                  }}
               >
                 Delete
-              </button>
+              </button>: null }
               {channel.name}
             </li>
           ))}

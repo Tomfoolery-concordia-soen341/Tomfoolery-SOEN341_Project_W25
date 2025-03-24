@@ -29,10 +29,8 @@ const Login = () => {
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        if (userData.role === "admin") {
-          navigate("/Admin"); // Redirect to admin dashboard
-        } else if (userData.role === "user") {
-          navigate("/Member"); // Redirect to member dashboard
+        if (userData.role) {
+          navigate("/Dashboard"); // Redirect to admin dashboard
         } else {
           alert("Unauthorized role.");
         }

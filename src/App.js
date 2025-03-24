@@ -11,38 +11,22 @@ import MembersFriendsList from "./components/Member/MemberFriendsList";
 import AdminsFriendsList from "./components/Admin/AdminFriendsList";
 import PrivateChannel from "./components/PrivateChannel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
-
+import Dashboard from "./components/Dashboard"
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        <Route
-          path="/Admin"
-          element={
-            <ProtectedRoute>
-              <AdminDash />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="" />
-        <Route
-          path="/Member"
-          element={
-            <ProtectedRoute>
-              <MemberDash />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="" />
+        <Route path="/Admin" element={<ProtectedRoute><AdminDash /></ProtectedRoute>}/>
+        <Route path="/Member" element={<ProtectedRoute><MemberDash /></ProtectedRoute>}/>
         <Route path="/Afriends" element={<AdminsFriendsList />} />
         <Route path="/channelA/:id" element={<AdminChannel />} />
         <Route path="/privchannel/:id" element={<PrivateChannel />} />
         <Route path="/Mfriends" element={<MembersFriendsList />} />
         <Route path="/channelM/:id" element={<MemberChannel />} />
         <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
+        <Route path="/Dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );

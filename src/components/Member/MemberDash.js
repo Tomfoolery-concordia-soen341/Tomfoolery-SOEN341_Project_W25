@@ -20,7 +20,7 @@ const MemberDash = () => {
 
   useEffect(() => {
     if (user) {
-      fetchChannels();
+      fetchChannels().then(r => null);
     }
   }, [user, dialogNewChannel]);
 

@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {
-    doc,
-    updateDoc,
-    arrayUnion,
-    getDoc,
-    collection,
-    getDocs,
-    onSnapshot,
-    addDoc,
-    serverTimestamp,
-    query,
-    arrayRemove
-} from "firebase/firestore";
+import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp, arrayRemove} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
@@ -22,30 +10,41 @@ const PrivateChannel = () => {
     const { state } = useLocation();
     const { channel } = state;
     const [user] = useAuthState(auth);
+    //boolean values for private channel control
     const [admin, setAdmin] = useState(false);
     const [owner, setOwner] = useState(false);
     const [ownerEmail, setOwnerEmail] = useState("");
     const [members, setMembers] = useState([]);
-    const [allUsers, setAllUsers] = useState([]); // List of all users
-    const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
+
+    //list of all users to add
+    const [allUsers, setAllUsers] = useState([]);
+    //selected members on dropdown
+    const [selectedMember, setSelectedMember] = useState("");
+    //return function
     const navigate = useNavigate();
+    //message handling
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
 
+    //request handling
+    const [requestToUpdate, setRequestToUpdate] = useState(false);
+    const [requests, setRequests] = useState([]);
 
     // Fetch the channel's data
     const fetchChannelData = async () => {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.data().role === "admin") {
             setAdmin(true);
         }
 
-        const channelRef = doc(db, "privateChannels", channel.id);
-        const channelSnap = await getDoc(channelRef);
+        const channelSnap = await getDoc(doc(db, "privateChannels", channel.id));
         if (channelSnap.exists()) {
-            setMembers(channelSnap.data().members || []);
-            setOwnerEmail(channelSnap.data().owner);
+            const channelData = channelSnap.data();
+            console.log("Channel data:", channelData); // Log the entire channel data
+            setMembers(channelData.members || []);
+            setOwnerEmail(channelData.owner);
+            setRequests(channelData.request || []); // Fetch the requests field
+            console.log("Requests:", channelData.request); // Log the requests field
         }
         if (channelSnap.data().owner === user.email) {
             setOwner(true);
@@ -54,10 +53,10 @@ const PrivateChannel = () => {
         }
     }
 
+
     // Fetch all users
     const fetchUsers = async () => {
-        const usersRef = collection(db, "users");
-        const querySnapshot = await getDocs(usersRef);
+        const querySnapshot = await getDocs(collection(db, "users"));
         const users = querySnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -71,9 +70,7 @@ const PrivateChannel = () => {
             alert("Please select a member.");
             return;
         }
-
-        const channelRef = doc(db, "privateChannels", channel.id);
-        await updateDoc(channelRef, {
+        await updateDoc(doc(db, "privateChannels", channel.id), {
             members: arrayUnion(selectedMember), // Add the selected member to Firestore
         });
 
@@ -81,11 +78,10 @@ const PrivateChannel = () => {
         setSelectedMember(""); // Clear dropdown
         alert(`Added ${selectedMember} to ${channel.name}`);
     };
-    // Listen for chat messages
-    const retrieveMessages = () => {
-        const messagesRef = collection(db, "privateChannels", channel.id, "messages");
 
-        onSnapshot(messagesRef, (snapshot) => {
+    // Listen for chat messages
+    const GetMessages = () => {
+        onSnapshot(collection(db, "privateChannels", channel.id, "messages"), (snapshot) => {
             const messagesData = snapshot.docs.map((doc) => ({
                 id: doc.id, // Include the document ID
                 ...doc.data(), // Include the document data
@@ -94,20 +90,29 @@ const PrivateChannel = () => {
         });
     };
 
-    // Send message
+    //send message function
     const sendMessage = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim()) return; // if there are no messages.
 
-        const messagesRef = collection(db, "privateChannels", channel.id, "messages");
-        await addDoc(messagesRef, {
+        //add the new message to the database
+        addDoc(collection(db, "privateChannels", channel.id, "messages"), {
             text: newMessage,
             sender: auth.currentUser.email,
             timestamp: serverTimestamp(),
-        });
-
-        setNewMessage(""); // Clear input after sending
+        })
+            //after it adds, then it will clear the message
+            .then(() => {
+                //clear the new message, wait for new one.
+                setNewMessage("");
+            })
+            //error handling
+            .catch((error) => {
+                console.error("Error sending message:", error);
+                alert("Failed to send message.");
+            });
     };
 
+    //leave the channel, meaning you won't be able to get back for free.
     const leaveChannel = async () => {
         if (owner) {
             const confirm = window.confirm(
@@ -121,46 +126,133 @@ const PrivateChannel = () => {
             if (!confirm) return;
         }
 
-
-        const channelRef = doc(db, "privateChannels", channel.id);
-        await updateDoc(channelRef, {members: arrayRemove(user.email)})
+        await updateDoc(doc(db, "privateChannels", channel.id), {members: arrayRemove(user.email)})
             .then(() => {BackToDashboard()})
 
     }
 
-    useEffect(() => {
-        fetchChannelData();
-        fetchUsers(); // Fetch the list of users
-        sendMessage();
-        retrieveMessages();
-    }, []);
+    //delete message function
+    const DeleteMessage = async (message) => {
+        //exception handling
+        if (!message || !channel) {
+            console.log("Message or channel is invalid:", message, channel);
+            alert("Invalid message or channel ID.");
+            return;
+        }
 
-    const BackToDashboard = () => {
-        if (admin) {
-            navigate("/Admin");
-        } else {
-            navigate("/Member");
+        //console check
+        console.log("Message ID to delete:", message.id);
+
+        //pop-up message yes or no
+        const confirmDelete = window.confirm("Delete this message?");
+
+        //if no, return
+        if (!confirmDelete) return;
+
+        //if yes, try to delete
+        try {
+            //delete message from database
+            await deleteDoc(doc(db, `privateChannels/${channel.id}/messages`, message.id));
+
+            //update the chat
+            setMessages(messages.filter((msg) => msg.id !== message.id));
+
+            //confirmation
+            alert("Message deleted successfully.");
+        } catch (error) {
+            //error handling
+            console.error("Error deleting message:", error);
+            alert("Failed to delete message.");
         }
     };
 
+    const logger = (msg) => {
+        console.log (msg)
+    }
+    //accept requests to join a channel
+    const AcceptRequest = async (requester) => {
+        //reference
+        const channelRef = doc(db, "privateChannels", channel.id);
+        //when accepted, will add the user to the channel
+        await updateDoc(channelRef, {
+            members: arrayUnion(requester),
+            request: arrayRemove(requester),
+        });
+        //confirmation message
+        alert(`Accepted ${requester} to ${channel.name}`);
+        //wait for another request reset the variable.
+        setRequestToUpdate(true);
+    }
+
+    //delete requests to a channel
+    const DeleteRequest = async (requester) => {
+        //update the document of requests, and remove the request
+        await updateDoc(doc(db, "privateChannels", channel.id), {
+            request: arrayRemove(requester),
+        });
+        //confirmation
+        alert(`Rejected ${requester} request for ${channel.name}`);
+        //accept requests again. new requests will show again.
+        setRequestToUpdate(true);
+    }
+
+
+    useEffect(() => {
+        fetchChannelData()
+            .then(() => fetchUsers())
+            .then(() => GetMessages())
+            .then(() => setRequestToUpdate(false)) //stop updating
+            .catch((error) => {
+                console.error("Error fetching data:", error);
+            });
+    }, [requestToUpdate]);
+
+
+    const BackToDashboard = () => {
+        navigate("/Dashboard");
+    };
     return (
         <div>
-            <h1>Private Channel: {channel.name}</h1>
+            <h1>{channel.isDefault ? "Public " : "Private "}Channel: {channel.name}</h1>
 
             {admin ? <div>
                 <h3>Owner: {ownerEmail}</h3>
-            </div> : <div>
-                <button onClick = {leaveChannel}>Leave Channel</button>
-            </div> }
-
+            </div> :
+                <div>
+                    {channel.isDefault ? null : <button onClick={leaveChannel}>Leave Channel</button>}
+                </div>
+            }
             {(owner || admin) ? <div>
-                <h2>Members</h2>
+            <h2>Members</h2>
                 <ul style={{listStyleType: "none", padding: 0}}>
                     {members.map((member, index) => (
                         <li key={index}>{member}</li>
                     ))}
                 </ul>
-            </div> : null }
+            </div> : null
+            }
+
+            {(owner || admin) ? <div>
+                <h3>Requests</h3>
+                <ul style={{listStyleType: "none", padding: 0}}>
+                    {requests.map((member, index) => (
+                        <li key={index}> {member}
+                            {member.name}
+                            <button onClick={(e) => {
+                                e.stopPropagation();
+                                AcceptRequest(member);
+                            }}> Accept
+                            </button>
+                            <button onClick={(e) => {
+                                e.stopPropagation();
+                                DeleteRequest(member);
+                            }}> Delete
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </div> : null}
+
 
             {(owner || admin) ? <div>
                 <h3>Add Member</h3>
@@ -180,16 +272,16 @@ const PrivateChannel = () => {
                     </select>
                     <button onClick={addMember}>Add Member</button>
                 </div>
-                <button onClick={BackToDashboard}>Go back to Dashboard</button>
             </div> : null }
 
-            {/* Chat Section */}
+
             <div>
                 <h2>Chat</h2>
                 <div className="chat-window">
                     {messages.map((msg, index) => (
                         <p key={index}>
                             <strong>{msg.sender}:</strong> {msg.text}
+                            {(owner || admin) ? <button onClick={() => DeleteMessage(msg)}>Delete</button>: null}
                         </p>
                     ))}
                 </div>

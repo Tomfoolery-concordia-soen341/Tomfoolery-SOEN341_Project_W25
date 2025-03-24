@@ -1,69 +1,55 @@
 import React, { useState, useEffect } from "react";
-import {
-  doc,
-  getDoc,
-  collection,
-  addDoc,
-  onSnapshot,
-  serverTimestamp,
-  getDocs,
-  updateDoc,
-  arrayRemove,
-} from "firebase/firestore";
+import {doc, getDoc, collection, addDoc, onSnapshot, serverTimestamp, updateDoc, arrayRemove,} from "firebase/firestore";
 import { db, auth } from "../../config/firebase";
 import {useLocation, useNavigate} from "react-router-dom";
-import {useAuthState} from "react-firebase-hooks/auth"; // Import Firestore & Auth
+import {useAuthState} from "react-firebase-hooks/auth";
 
 const MemberChannel = () => {
+  //basic variables: authentication, the channel we are in and the state.
   const [user] = useAuthState(auth);
-  const [isDefault, setIsDefault] = useState(false);
-  const [members, setMembers] = useState([]); 
-  const [messages, setMessages] = useState([]); 
-  const [newMessage, setNewMessage] = useState("");
   const { state } = useLocation();
   const { channel } = state;
+  //channel default vars
+  const [isDefault, setIsDefault] = useState(false);
+  //display member  vars
+  const [members, setMembers] = useState([]);
+  //message sending vars
+  const [messages, setMessages] = useState([]); 
+  const [newMessage, setNewMessage] = useState("");
+  //navigation var
   const navigate = useNavigate();
 
+  //continuous updates
   useEffect(() => {
-    fetchChannelData();
-    listenForMessages();
+    GetMessages(); //every new message will update
   }, []);
 
-  // Fetch channel members
-  const fetchChannelData = async () => {
-    const channelRef = doc(db, "channels", channel.id);
-    const channelSnap = await getDoc(channelRef);
-    if (channelSnap.exists()) {
-      setMembers(channelSnap.data().members || []);
-      setIsDefault(channelSnap.data().isDefault);
-    }
-  };
-
   // Listen for chat messages
-  const listenForMessages = () => {
+  const GetMessages = () => {
+    //get the data for each message
     onSnapshot(collection(db, "channels", channel.id, "messages"), (snapshot) => {
-      setMessages(snapshot.docs.map((doc) => doc.data()));
+      setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
   };
 
-  // Send message
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    const messagesRef = collection(db, "channels", channel.id, "messages");
-    await addDoc(messagesRef, {
+  //send message function
+  const SendMessage = async () => {
+    if (!newMessage.trim()) return; //if no new message, return
+    //if there is a message, put in the database
+    await addDoc(collection(db, "channels", channel.id, "messages"), {
       text: newMessage,
       sender: auth.currentUser.email, 
       timestamp: serverTimestamp(),
     });
-
-    setNewMessage(""); // Clear input after sending
+    //clear the new message sent, wait for new one
+    setNewMessage("");
   };
-
+  //return to dashboard
   const BackToDashboard = () => {
     navigate("/Member");
   };
 
+  //leaving channel function
   const leaveChannel = async () => {
     const confirm = window.confirm(
         "Do you want to leave this channel?",
@@ -73,8 +59,8 @@ const MemberChannel = () => {
     const channelRef = doc(db, "channels", channel.id);
     await updateDoc(channelRef, {members: arrayRemove(user.email)})
     .then(() => {BackToDashboard()})
-
   }
+
 
   return (
     <div>
@@ -106,7 +92,7 @@ const MemberChannel = () => {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={SendMessage}>Send</button>
       </div>
       <button onClick={BackToDashboard}>Go back to Dashboard</button>
     </div>

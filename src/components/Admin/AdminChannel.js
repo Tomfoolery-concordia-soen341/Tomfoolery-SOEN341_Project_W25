@@ -1,164 +1,151 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import {
-  doc,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-  collection,
-  getDocs,
-  onSnapshot,
-  addDoc,
-  serverTimestamp,
-  arrayRemove,
-} from "firebase/firestore";
+import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp, arrayRemove,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 
+//component
 const AdminChannel = () => {
+  //basic variables: authentication, the channel we are in and the state.
   const { state } = useLocation();
   const { channel } = state;
   const [user] = useAuthState(auth);
+  // message functions
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  //used to navigate between pages
+  const navigate = useNavigate();
+  //fetch data for channel
   const [isDefault, setIsDefault] = useState(false);
   const [members, setMembers] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // List of all users
-  const [selectedMember, setSelectedMember] = useState(""); // Selected member from dropdown
-  const navigate = useNavigate();
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  // drill down selecting members
+  const [selectedMember, setSelectedMember] = useState("");
+  // fetch users
+  const [allUsers, setAllUsers] = useState([]);
+  //request functions to join a channel
   const [requestToUpdate, setRequestToUpdate] = useState(false);
 
-
-  // Fetch the channel's data
-  const fetchChannelData = async () => {
-    const channelRef = doc(db, "channels", channel.id);
-    const channelSnap = await getDoc(channelRef);
-    if (channelSnap.exists()) {
-      setMembers(channelSnap.data().members || []);
-      setRequests(channelSnap.data().request || []);
-      setIsDefault(channelSnap.data().isDefault);
-    }
+  //return to dashboard function
+  const BackToDashboard = () => {
+    //this is for admins only
+    navigate("/Admin");
   };
 
-  // Fetch all users
-  const fetchUsers = async () => {
-    const usersRef = collection(db, "users");
-    const querySnapshot = await getDocs(usersRef);
-    const users = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setAllUsers(users);
-  };
-
-  // Add a member to the channel
-  const addMember = async () => {
+  //add members function
+  const AddMember = async () => {
     if (!selectedMember) {
+      //error handling.
       alert("Please select a member.");
       return;
     }
 
-    const channelRef = doc(db, "channels", channel.id);
-    await updateDoc(channelRef, {
-      members: arrayUnion(selectedMember), // Add the selected member to Firestore
+    // add members to Firestore
+    await updateDoc(doc(db, "channels", channel.id), {
+      members: arrayUnion(selectedMember)
     });
 
-    setMembers((prev) => [...prev, selectedMember]); // Update local members state
-    setSelectedMember(""); // Clear dropdown
+    // update local members state, added to the channel
+    setMembers((prev) => [...prev, selectedMember]);
+    //after adding, clear the variable for a new member to be added later.
+    setSelectedMember("");
+    //send a confirmation message
     alert(`Added ${selectedMember} to ${channel.name}`);
   };
-  // Listen for chat messages
-  const retrieveMessages = () => {
-    const messagesRef = collection(db, "channels", channel.id, "messages");
 
-    onSnapshot(messagesRef, (snapshot) => {
-      const messagesData = snapshot.docs.map((doc) => ({
-        id: doc.id, // Include the document ID
-        ...doc.data(), // Include the document data
-      }));
-      setMessages(messagesData); // Update state with messages
+  //retrieve message in the channel
+  const GetMessages = () => {
+    //get the data for each message
+    onSnapshot(collection(db, "channels", channel.id, "messages"), (snapshot) => {
+      setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
   };
 
-  // Send message
-  const sendMessage = async () => {
+  // send message function
+  const SendMessage = async () => {
+    //if there is no message, or rather empty message, do nothing
     if (!newMessage.trim()) return;
 
-    const messagesRef = collection(db, "channels", channel.id, "messages");
-    await addDoc(messagesRef, {
+    //store the message into the database, with the user and the time it was sent.
+    await addDoc(collection(db, "channels", channel.id, "messages"), {
       text: newMessage,
       sender: auth.currentUser.email,
       timestamp: serverTimestamp(),
     });
-
+    //set the message that was just sent as nothing.
     setNewMessage(""); // Clear input after sending
   };
 
-  const DeleteMessage = async (messageId) => { // No need for channelId parameter
-    if (!messageId || !channel) { // Check selectedChannel
-      console.log (messageId)
-      console.log (channel)
+  //delete message function
+  const DeleteMessage = async (message) => {
+    //exception handling
+    if (!message || !channel) {
+      console.log("Message or channel is invalid:", message, channel);
       alert("Invalid message or channel ID.");
       return;
     }
 
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
+    //console check
+    console.log("Message ID to delete:", message.id);
 
-    if (!userSnap.exists() || userSnap.data().role !== "admin") {
-      alert("Stop trying already, you're not an Admin!");
-      return;
-    }
+    //pop-up message yes or no
+    const confirmDelete = window.confirm("Delete this message?");
 
-    const confirmDelete = window.confirm(
-        "Do you commit to the sins of deleting this message???????"
-    );
+    //if no, return
     if (!confirmDelete) return;
 
+    //if yes, try to delete
     try {
-      // Use selectedChannel.id to get the channel ID
-      await deleteDoc(doc(db, `channels/${channel.id}/messages`, messageId));
-      setMessages(messages.filter((message) => message.id !== messageId));
+      //delete message from database
+      await deleteDoc(doc(db, `channels/${channel.id}/messages`, message.id));
+
+      //update the chat
+      setMessages(messages.filter((msg) => msg.id !== message.id));
+
+      //confirmation
       alert("Message deleted successfully.");
-    } catch (error) { // Corrected the catch block
+    } catch (error) {
+      //error handling
       console.error("Error deleting message:", error);
       alert("Failed to delete message.");
     }
   };
 
-  const acceptRequest = async (requester) => {
+  //accept requests to join a channel
+  const AcceptRequest = async (requester) => {
+    //reference
     const channelRef = doc(db, "channels", channel.id);
+    //when accepted, will add the user to the channel
     await updateDoc(channelRef, {
       members: arrayUnion(requester),
       request: arrayRemove(requester),
     });
+    //confirmation message
     alert(`Accepted ${requester} to ${channel.name}`);
+    //wait for another request reset the variable.
     setRequestToUpdate(true);
   }
 
-  const deleteRequest = async (requester) => {
-    const channelRef = doc(db, "channels", channel.id);
-    await updateDoc(channelRef, {
+  //delete requests to a channel
+  const DeleteRequest = async (requester) => {
+    //update the document of requests, and remove the request
+    await updateDoc(doc(db, "channels", channel.id), {
       request: arrayRemove(requester),
     });
+    //confirmation
     alert(`Rejected ${requester} request for ${channel.name}`);
+    //accept requests again. new requests will show again.
     setRequestToUpdate(true);
   }
 
-  useEffect(() => {
-    fetchChannelData();
-    fetchUsers(); // Fetch the list of users
-    sendMessage();
-    retrieveMessages();
-    setRequestToUpdate(false);
-  }, [requestToUpdate]);
-
-  const BackToDashboard = () => {
-    navigate("/Admin");
-  };
+  //continuous updates when requests are sent.
+  useEffect
+  (() => {
+      GetMessages(); //retrieve messages
+      setRequestToUpdate(false); //stop updating
+    }, [requestToUpdate]);
 
   return (
       <div>
@@ -180,11 +167,11 @@ const AdminChannel = () => {
                 <li key={index}>{member}
                   <button onClick = {(e) => {
                   e.stopPropagation();
-                  acceptRequest(member);
+                  AcceptRequest(member);
                 }}> Accept </button>
                   <button onClick = {(e) => {
                     e.stopPropagation();
-                    deleteRequest(member);
+                    DeleteRequest(member);
                   }}> Delete </button>
                 </li>
             ))}
@@ -207,7 +194,7 @@ const AdminChannel = () => {
                       </option>
                   ))}
             </select>
-            <button onClick={addMember}>Add Member</button>
+            <button onClick={AddMember}>Add Member</button>
           </div>
           <button onClick={BackToDashboard}>Go back to Dashboard</button>
         </div> : null }
@@ -219,7 +206,7 @@ const AdminChannel = () => {
             {messages.map((msg, index) => (
                 <p key={index}>
                   <strong>{msg.sender}:</strong> {msg.text}
-                  <button onClick={() => DeleteMessage(msg.id)}>Delete</button>
+                  <button onClick={() => DeleteMessage(msg)}>Delete</button>
                 </p>
             ))}
           </div>
@@ -228,7 +215,7 @@ const AdminChannel = () => {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
           />
-          <button onClick={sendMessage}>Send</button>
+          <button onClick={SendMessage}>Send</button>
         </div>
         <button onClick={BackToDashboard}>Go back to Dashboard</button>
       </div>
