@@ -1,6 +1,19 @@
 import React, {useState, useEffect, useRef} from "react";
 import { useLocation } from "react-router-dom";
-import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp, arrayRemove} from "firebase/firestore";
+import {
+    doc,
+    updateDoc,
+    arrayUnion,
+    getDoc,
+    collection,
+    orderBy,
+    getDocs,
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+    arrayRemove,
+    query
+} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
@@ -56,11 +69,7 @@ const PrivateChannel = () => {
     }
 
     useEffect(() => {
-        if (chatEndRef.current) {
-            if (newMessage) {
-                chatEndRef.current.scrollIntoView({behavior: "smooth"});
-            }
-        }
+        chatEndRef.current.scrollIntoView({behavior: "smooth"});
     }, [messages]);
 
     // Fetch all users
@@ -90,7 +99,8 @@ const PrivateChannel = () => {
 
     // Listen for chat messages
     const GetMessages = () => {
-        onSnapshot(collection(db, "privateChannels", channel.id, "messages"), (snapshot) => {
+        const sorter = query(collection(db, "privateChannels", channel.id, "messages"), orderBy("timestamp"));
+        onSnapshot(sorter, (snapshot) => {
             const messagesData = snapshot.docs.map((doc) => ({
                 id: doc.id, // Include the document ID
                 ...doc.data(), // Include the document data
