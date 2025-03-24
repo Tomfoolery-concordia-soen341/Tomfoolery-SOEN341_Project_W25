@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import { useLocation } from "react-router-dom";
 import {doc, updateDoc, arrayUnion, getDoc, collection, getDocs, onSnapshot, addDoc, serverTimestamp, arrayRemove} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {auth, db} from "../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
+import "./CMDashboard.css"
 
 const PrivateChannel = () => {
     const { state } = useLocation();
@@ -25,6 +26,7 @@ const PrivateChannel = () => {
     //message handling
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const chatEndRef = useRef(null);
 
     //request handling
     const [requestToUpdate, setRequestToUpdate] = useState(false);
@@ -53,6 +55,13 @@ const PrivateChannel = () => {
         }
     }
 
+    useEffect(() => {
+        if (chatEndRef.current) {
+            if (newMessage) {
+                chatEndRef.current.scrollIntoView({behavior: "smooth"});
+            }
+        }
+    }, [messages]);
 
     // Fetch all users
     const fetchUsers = async () => {
@@ -277,13 +286,15 @@ const PrivateChannel = () => {
 
             <div>
                 <h2>Chat</h2>
-                <div className="chat-window">
-                    {messages.map((msg, index) => (
-                        <p key={index}>
-                            <strong>{msg.sender}:</strong> {msg.text}
-                            {(owner || admin) ? <button onClick={() => DeleteMessage(msg)}>Delete</button>: null}
-                        </p>
-                    ))}
+                <div className="chat-container">
+                    <ul className="chat-window">
+                        {messages.map((msg, index) => (
+                            <p key={index}>
+                                <strong>{msg.sender}:</strong> {msg.text}
+                                {(owner || admin) ? <button onClick={() => DeleteMessage(msg)}>Delete</button> : null}
+                            </p>
+                        ))}
+                    </ul>
                 </div>
                 <input
                     value={newMessage}
@@ -291,6 +302,7 @@ const PrivateChannel = () => {
                     placeholder="Type a message..."
                 />
                 <button onClick={sendMessage}>Send</button>
+                <div ref={chatEndRef}></div>
             </div>
             <button onClick={BackToDashboard}>Go back to Dashboard</button>
         </div>
