@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from "react";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { signOut } from "firebase/auth";
 import {doc, getDocs, collection, query, where, updateDoc, serverTimestamp, onSnapshot,} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -7,15 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
 import {createPortal} from "react-dom";
-import NewChannelPrompt from "./dialogPrompts/NewChannelPrompt";
-import "./dialogPrompts/Modal.css"
-import PublicChannelsPrompt from "./dialogPrompts/PublicChannelsPrompt";
+import NewChannelPrompt from "../Channels/NewChannelPrompt";
+import "../Channels/Modal.css"
+import PublicChannelsPrompt from "../Channels/PublicChannelsPrompt";
 import {formatDistanceToNow} from "date-fns";
 
 //context menu imports
-import ContextMenu from "./ContextMenu/ContextMenu";
-import "./ContextMenu/ContextMenu.css";
-import "./CMDashboard.css";
+import ContextMenu from "../ContextMenu/ContextMenu";
+import "../ContextMenu/ContextMenu.css";
+import "./Dashboard.css";
 
 const styles = {
   statusDot: {
@@ -138,9 +138,9 @@ const Dashboard = () => {
 
   const GoToFriendsList = () => {
     if (admin)
-    navigate("/Afriends"); // Redirect to the friends list page
+    navigate("/friends"); // Redirect to the friends list page
     else
-      navigate("/Mfriends");
+      navigate("/friends");
   };
 
   const GoToChannel = (channel) => {

@@ -1,24 +1,11 @@
 import React, {useState, useEffect, useRef} from "react";
 import { useLocation } from "react-router-dom";
-import {
-    doc,
-    updateDoc,
-    arrayUnion,
-    getDoc,
-    collection,
-    orderBy,
-    getDocs,
-    onSnapshot,
-    addDoc,
-    serverTimestamp,
-    arrayRemove,
-    query
-} from "firebase/firestore";
+import {doc, updateDoc, arrayUnion, getDoc, collection, orderBy, getDocs, onSnapshot, addDoc, serverTimestamp, arrayRemove, query} from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import {auth, db} from "../config/firebase";
+import {auth, db} from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { deleteDoc } from "firebase/firestore";
-import "./CMDashboard.css"
+import "../Dashboard/Dashboard.css"
 
 const PrivateChannel = () => {
     const { state } = useLocation();
