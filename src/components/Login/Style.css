@@ -57,6 +57,14 @@
   border: 1px solid #d1d5db; /* 1px border with gray color */
   border-radius: 8px;   /* Rounded corners (8px) */ /* Rounded corners (8px) */
   }
+
+.InputUsername{
+  width: 80%;
+  padding: 8px;         /* Padding: 8px on all sides */
+  border: 1px solid #d1d5db; /* 1px border with gray color */
+  border-radius: 8px;   /* Rounded corners (8px) */ /* Rounded corners (8px) */
+}
+
   .LoginButton{
     width: 90%; /* Full width */
   background-color: #3b82f6; /* #3b82f6 Blue 500 */

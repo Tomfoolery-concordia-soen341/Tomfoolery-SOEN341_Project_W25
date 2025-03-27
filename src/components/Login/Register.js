@@ -8,6 +8,7 @@ import "./Style.css";
 const Register = () => {
   const [RegisterEmail, setRegisterEmail] = useState("");
   const [RegisterPassword, setRegisterPassword] = useState("");
+  const [RegisterUsername, setRegisterUsername] = useState("");
   const [role, setRole] = useState("");
   const navigate = useNavigate();
 
@@ -22,6 +23,7 @@ const Register = () => {
       );
       const user = userCredential.user;
       await setDoc(doc(db, "users", user.uid), {
+        username: RegisterUsername,
         email: RegisterEmail,
         role: role,
         lastSeen: serverTimestamp(),
@@ -45,33 +47,44 @@ const Register = () => {
             <div>
               <label className="Email">Email</label>
               <input
-                className="InputEmail"
-                type="email"
-                placeholder="Email"
-                value={RegisterEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                required
+                  className="InputUsername"
+                  type="Username"
+                  placeholder="Username"
+                  value={RegisterEmail}
+                  onChange={(e) => setRegisterUsername(e.target.value)}
+                  required
+              />
+            </div>
+            <div>
+              <label className="Email">Email</label>
+              <input
+                  className="InputEmail"
+                  type="email"
+                  placeholder="Email"
+                  value={RegisterEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  required
               />
             </div>
             <div>
               <label className="Password">Password</label>
               <input
-                className="InputPassword"
-                type="password"
-                placeholder="Password"
-                value={RegisterPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
-                required
+                  className="InputPassword"
+                  type="password"
+                  placeholder="Password"
+                  value={RegisterPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  required
               />
             </div>
             <div>
               <label className="Role">Role</label>
               <select
-                className="RoleSelect"
-                // w-full p-2 border border-gray-300 rounded-lg
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
+                  className="RoleSelect"
+                  // w-full p-2 border border-gray-300 rounded-lg
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  required
               >
                 <option value="">Select a role</option>
                 <option value="admin">Admin</option>

@@ -6,6 +6,7 @@ import FriendList from "./components/FriendsList/FriendList";
 import PrivateChannel from "./components/Channels/PrivateChannel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
 import Dashboard from "./components/Dashboard/Dashboard"
+import ProfilePage from "./components/Profile/ProfilePage";
 function App() {
   return (
     <Router>
@@ -16,6 +17,7 @@ function App() {
         <Route path="/privchannel/:id" element={<PrivateChannel />} />
         <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
         <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/Profile" element={<ProfilePage />} />
       </Routes>
     </Router>
   );

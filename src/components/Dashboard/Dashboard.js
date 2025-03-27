@@ -11,31 +11,16 @@ import NewChannelPrompt from "../Channels/NewChannelPrompt";
 import "../Channels/Modal.css"
 import PublicChannelsPrompt from "../Channels/PublicChannelsPrompt";
 import {formatDistanceToNow} from "date-fns";
+import "./Dashboard.css"
 
 //context menu imports
 import ContextMenu from "../ContextMenu/ContextMenu";
 import "../ContextMenu/ContextMenu.css";
 import "./Dashboard.css";
 
-const styles = {
-  statusDot: {
-    height: "10px",
-    width: "10px",
-    borderRadius: "50%",
-    display: "inline-block",
-    marginRight: "5px",
-  },
-  online: {
-    backgroundColor: "green",
-  },
-  offline: {
-    backgroundColor: "red",
-  },
-};
-
 const Dashboard = () => {
   const [user] = useAuthState(auth);
-
+  const [username, setUsername] = useState('');
   const [channels, setChannels] = useState([]);
   const [defaultChannels, setDefaultChannels] = useState([]);
   const [privateChannels, setPrivateChannels] = useState([]);
@@ -96,6 +81,7 @@ const Dashboard = () => {
         (snapshot) => {
           const usersData = snapshot.docs
               .map((doc) => ({
+                username: doc.data().username,
                 email: doc.data().email,
                 lastSeen: doc.data().lastSeen || null,
                 status: doc.data().status || "inactive",
@@ -111,11 +97,20 @@ const Dashboard = () => {
     return unsubscribe;
   };
 
+  useEffect(() => {
+    if (user) {
+      const fetchUsername = async () => {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUsername(userDoc.data().username || user.email); // Fallback to email if no username
+        }
+      };
+      fetchUsername().then(r => null);
+    }
+  }, [user]);
+
   // context menu vars
   const contextMenuRef = useRef(null);
-  const chatEndRef = useRef(null);
-  const [FirstSelect, setFirstSelect] = useState(null);
-  const [quotedMessage, setSelectedChannel] = useState(null); // State for quoted message
   const [contextMenu, setContextMenu] = useState({
     position: {
       x: 0,
@@ -137,21 +132,15 @@ const Dashboard = () => {
   };
 
   const GoToFriendsList = () => {
-    if (admin)
     navigate("/friends"); // Redirect to the friends list page
-    else
-      navigate("/friends");
   };
 
   const GoToChannel = (channel) => {
-    if (admin)
     navigate(`/privchannel/${channel.id}`, { state: { channel } });
-    else
-      navigate(`/privchannel/${channel.id}`, { state: { channel } });
   };
 
-  const GoToPrivChannel = (channel) => {
-    navigate(`/privchannel/${channel.id}`, { state: { channel } });
+  const GoToProfile = () => {
+      navigate(`/Profile`, { });
   };
 
   const Logout = async () => {
@@ -267,125 +256,168 @@ const Dashboard = () => {
   },[contextMenu.toggled]); // Re-attach the listener when the menu is toggled
 
 
+
   useEffect(() => {
     fetchData().then(r => fetchAllUsers())
   }, [dialogShow]);
 
   return (
-    <div>
-      <ContextMenu
-          contextMenuRef={contextMenuRef}
-          isToggled={contextMenu.toggled}
-          positionX={contextMenu.position.x}
-          positionY={contextMenu.position.y}
-          buttons={[
-            {
-              text: "Join",
-              icon: "",
-              onClick: () => {
-                GoToChannel(contextMenu.channel);
-                resetContextMenu();
-              },
-              isSpacer: false,
-              show: true,
-            },
-            {
-              text: "Delete",
-              icon: "",
-              onClick: () => {
-                if (contextMenu.channel) {
-                  DeleteChannel(contextMenu.channel.id).then(() => resetContextMenu());
-                }
-              },
-              isSpacer: false,
-              show: admin,
-            },
-          ]}
-      />
-      <h1>Dashboard</h1>
-      <p>
-        Logged in as: <strong>{user?.email}</strong>
-      </p>
-      <p>You are an {admin ? "Admin!" : "Member!"}</p>
-      <label>Create a text channel</label>
-      <div>
-        <button onClick={() => setDialogShow(true)}>
-          Create a New Channel
-        </button>
-        {dialogShow && createPortal(
-            <div className = "overlay"><NewChannelPrompt onClose={ () => setDialogShow(false)} /></div>,
-            document.body
-        )}
-      </div>
-      <div>
-        <h2>Channels</h2>
-        <h3>Default Channels</h3>
-        <ul>
-          {defaultChannels.map((channel) => (
-              <li
-                  key={channel.id}
-                  className="ChannelA"
-                  onContextMenu={(e) => handleOnContextMenu(e, channel)}
-                  onClick={() => GoToChannel(channel)}
-              >
-                {channel.name}
-              </li>
-          ))}
-        </ul>
-        <h3>Private Channels</h3>
-        <ul>
-          {privateChannels.map((channel) => (
-              <li
-                  key={channel.id}
-                  className="ChannelA"
-                  onContextMenu={(e) => handleOnContextMenu(e, channel)}
-                  onClick={() => GoToPrivChannel(channel)}
-              >
-                {channel.name}
-              </li>
-          ))}
-        </ul>
-        <div>
-          {!admin && !owner ? <button onClick={() => setDialogJoinChannel(true)}>
-            Join a private channel
-          </button> : null}
+      <div className="dashboard-layout">
+        {/* Main Content Area */}
+        <main className="main-content">
+          <header className="dashboard-header">
+            <h1>Dashboard</h1>
+            <div className="user-controls">
+              <div className="user-info">
+                <div className="user-avatar">
+                  {username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="user-name">{username || user?.email}</p>
+                  <br></br>className="user-role">{admin ? "Admin" : "Member"}
+                </div>
+              </div>
+              {/*friends button next to name and logout*/}
+              <section className="friends-section">
+                <button className="btn btn-primary" onClick={GoToFriendsList}>
+                  Go to Friends List
+                </button>
+              </section>
+              <button className="btn profile-btn" onClick={GoToProfile}>
+                Profile
+              </button>
+              <button className="btn logout-btn" onClick={Logout}>
+                Logout
+              </button>
+            </div>
+          </header>
 
-          {dialogJoinChannel && createPortal(
-              <div className="overlay"><PublicChannelsPrompt onClose={() => setDialogJoinChannel(false)}/></div>,
-              document.body
-          )}
-        </div>
-        <h2>Registered Users</h2>
-        <ul>
-          {allUsers.length > 0 ? (
-              allUsers.map((registeredUser, index) => (
-                  <li key={index}>
-              <span
-                  style={{
-                    ...styles.statusDot,
-                    ...(isOnline(registeredUser.status)
-                        ? styles.online
-                        : styles.offline),
-                  }}
-              ></span>
-                    {registeredUser.email} - {registeredUser.role}{" "}
-                    <span>
-                ({formatLastSeen(registeredUser.lastSeen, registeredUser.status)}
-                      )
-              </span>
-                  </li>
-              ))
-          ) : (
-              <p>No other registered users found</p>
-          )}
-        </ul>
+          {/*channels and display of each channel by buttons*/}
+          <section className="channel-management">
+            <div className="create-channel">
+              <button
+                  className="btn btn-primary"
+                  onClick={() => setDialogShow(true)}
+              >
+                Create New Channel
+              </button>
+              {dialogShow && createPortal(
+                  <div className="overlay">
+                    <NewChannelPrompt onClose={() => setDialogShow(false)} />
+                  </div>,
+                  document.body
+              )}
+            </div>
+
+            {/*list of channels*/}
+            {/*first is default channels*/}
+            <div className="channels-container">
+              <div className="channel-section">
+                <h2>Default Channels</h2>
+                <div className="channel-grid">
+                  {defaultChannels.map((channel) => (
+                      <div
+                          key={channel.id}
+                          className="channel-card"
+                          onContextMenu={(e) => handleOnContextMenu(e, channel)}
+                          onClick={() => GoToChannel(channel)}
+                      >
+                        <span className="channel-name">{channel.name}</span>
+                      </div>
+                  ))}
+                </div>
+              </div>
+              {/*private channels here*/}
+              <div className="channel-section">
+                <h2>Private Channels</h2>
+                <div className="channel-grid">
+                  {privateChannels.map((channel) => (
+                      <div
+                          key={channel.id}
+                          className="channel-card"
+                          onContextMenu={(e) => handleOnContextMenu(e, channel)}
+                          onClick={() => GoToChannel(channel)}
+                      >
+                        <span className="channel-name">{channel.name}</span>
+                        {!admin && !owner && (
+                            <button
+                                className="btn join-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDialogJoinChannel(true);
+                                }}
+                            >
+                              Join
+                            </button>
+                        )}
+                      </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </main>
+
+        {/*sidebar on the right for registered users.*/}
+        {/*maybe add a serach function so you can serach the person, right click context menu and add them, or directly go to DMs*/}
+        <aside className="users-sidebar">
+          <h2>Online Users ({allUsers.filter(u => isOnline(u.status)).length})</h2>
+          <div className="users-list">
+            {allUsers.length > 0 ? (
+                allUsers.map((user, index) => (
+                    <div key={index} className="user-card">
+              <span className={`status-indicator ${
+                  isOnline(user.status) ? 'status-online' : 'status-offline'
+              }`}></span>
+                      <div className="user-info">
+                        <span className="username">{user.username}</span>
+                        <span className="user-role">{user.role}</span>
+                      </div>
+                      <div className="user-status">
+                        {isOnline(user.status) ? "Online" : formatLastSeen(user.lastSeen, user.status)}
+                      </div>
+                    </div>
+                ))
+            ) : (
+                <p className="no-users">No users found</p>
+            )}
+          </div>
+        </aside>
+
+        {/*context menu for our right click stuff*/}
+        {/*two functions for now, join and delete*/}
+        {/*MAybe add the DM directly or like add as friend*/}
+        <ContextMenu
+            contextMenuRef={contextMenuRef}
+            isToggled={contextMenu.toggled}
+            positionX={contextMenu.position.x}
+            positionY={contextMenu.position.y}
+            buttons={[
+              {
+                text: "Join",
+                icon: "",
+                onClick: () => {
+                  GoToChannel(contextMenu.channel);
+                  resetContextMenu();
+                },
+                isSpacer: false,
+                show: true,
+              },
+              {
+                text: "Delete",
+                icon: "",
+                onClick: () => {
+                  if (contextMenu.channel) {
+                    DeleteChannel(contextMenu.channel.id).then(() => resetContextMenu());
+                  }
+                },
+                isSpacer: false,
+                show: admin,
+              },
+            ]}
+        />
       </div>
-      <div>
-        <h1>Access your Friends list!</h1>
-        <button onClick={GoToFriendsList}>Go to Friends List</button>
-      </div>
-      <button onClick={Logout}>Log out</button>
-    </div>
   );
 };
 
