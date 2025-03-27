@@ -273,8 +273,8 @@ const Dashboard = () => {
                   {username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="user-name">{username || user?.email}</p>
-                  <br></br>className="user-role">{admin ? "Admin" : "Member"}
+                  <div className="user-name">{username || user?.email}</div>
+                  <div className="user-role">{admin ? "Admin" : "Member"} </div>
                 </div>
               </div>
               {/*friends button next to name and logout*/}
@@ -372,7 +372,7 @@ const Dashboard = () => {
               }`}></span>
                       <div className="user-info">
                         <span className="username">{user.username}</span>
-                        <span className="user-role">{user.role}</span>
+                        {/*<span className="user-role">{user.role}</span>*/}
                       </div>
                       <div className="user-status">
                         {isOnline(user.status) ? "Online" : formatLastSeen(user.lastSeen, user.status)}
