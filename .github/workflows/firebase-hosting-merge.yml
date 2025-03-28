@@ -8,6 +8,7 @@ on:
       - main
       - rec-1
       - cleaned
+      - Ming-dev
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
