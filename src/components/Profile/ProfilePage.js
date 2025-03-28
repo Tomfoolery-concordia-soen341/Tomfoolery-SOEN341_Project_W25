@@ -8,74 +8,89 @@ import './ProfilePage.css';
 
 const ProfilePage = () => {
     const [user, loading] = useAuthState(auth);
+
+    //change username
     const [formData, setFormData] = useState({
         username: '',
         currentPassword: '',
     });
+
+    //for email change
     const [emailForm, setEmailForm] = useState({
         currentPassword: '',
         newEmail: '',
     });
 
+    //change password
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
+    //error handling
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    //navigation
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    setFormData(prev => ({
-                        ...prev,
-                        username: userDoc.data().username || '',
-                        newEmail: user.email || ''
-                    }));
-                }
+    //fetch the user's information
+    const fetchUserData = async () => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                setFormData(prev => ({
+                    ...prev,
+                    username: userDoc.data().username || '',
+                    newEmail: user.email || ''
+                }));
             }
-        };
-        fetchUserData().then(r => null);
-    }, [user]);
+        }
+    };
 
+    //when
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleUpdateUsername = async (e) => {
+        //remove default
         e.preventDefault();
         try {
+            //make sure that the user can confirm
             const credential = EmailAuthProvider.credential(
                 user.email,
                 formData.currentPassword
             );
+            //if not authenticated, then you can't change usernames
             await reauthenticateWithCredential(user, credential);
+            //after authenticated, change the username
             await updateDoc(doc(db, 'users', user.uid), {
                 username: formData.username.trim()
             });
+            //print
             setSuccess('Username updated successfully!');
+            //no error
             setError('');
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
+            //on error based on which operation went wrong
             setError(err.message);
             setTimeout(() => setError(''), 3000);
         }
     };
-
+    //similar to update username
     const handleUpdateEmail = async (e) => {
         e.preventDefault();
         try {
+            //confirmation to change
             const credential = EmailAuthProvider.credential(
                 user.email,
                 emailForm.currentPassword
             );
             await reauthenticateWithCredential(user, credential);
-
+            //update the email
             await updateEmail(user, emailForm.newEmail);
             await updateDoc(doc(db, 'users', user.uid), {
                 email: emailForm.newEmail
@@ -88,21 +103,25 @@ const ProfilePage = () => {
             setTimeout(() => setError(''), 3000);
         }
     };
-
+    //similar to username
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
+        //if the password is not yet confirmed, then error.
         if (formData.newPassword !== formData.confirmPassword) {
             setError('Passwords do not match');
+            //in 3 seconds, its gone
             setTimeout(() => setError(''), 3000);
             return;
         }
 
         try {
+            //authenticate
             const credential = EmailAuthProvider.credential(
                 user.email,
                 passwordForm.currentPassword
             );
             await reauthenticateWithCredential(user, credential);
+            //update password
             await updatePassword(user, passwordForm.newPassword);
             setSuccess('Password updated successfully!');
             setError('');
@@ -114,12 +133,15 @@ const ProfilePage = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    //constantly update functions per new user loaded
+    useEffect(() => {
+
+        fetchUserData().then(r => null);
+    }, [user]);
 
     return (
         <div className="profile-page">
             <h1>Profile Settings</h1>
-
             <form onSubmit={handleUpdateUsername} className="profile-section">
                 <h2>Username</h2>
                 <input

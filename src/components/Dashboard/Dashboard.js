@@ -8,8 +8,9 @@ import { deleteDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
 import {createPortal} from "react-dom";
 import NewChannelPrompt from "../Channels/NewChannelPrompt";
-import "../Channels/Modal.css"
 import PublicChannelsPrompt from "../Channels/PublicChannelsPrompt";
+
+import "../Channels/Modal.css"
 import {formatDistanceToNow} from "date-fns";
 import "./Dashboard.css"
 
@@ -34,6 +35,8 @@ const Dashboard = () => {
 
   //channel request
   const [dialogJoinChannel, setDialogJoinChannel] = useState(false);
+
+
 
   //get channel data
   const fetchData = async () => {
@@ -97,6 +100,7 @@ const Dashboard = () => {
     return unsubscribe;
   };
 
+  //update the username constantly
   useEffect(() => {
     if (user) {
       const fetchUsername = async () => {
@@ -339,24 +343,27 @@ const Dashboard = () => {
                           onClick={() => GoToChannel(channel)}
                       >
                         <span className="channel-name">{channel.name}</span>
-                        {!admin && !owner && (
-                            <button
-                                className="btn join-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDialogJoinChannel(true);
-                                }}
-                            >
-                              Join
-                            </button>
-                        )}
                       </div>
                   ))}
                 </div>
               </div>
             </div>
           </section>
+          <p>
+          {!admin && !owner && (
+              <div>
 
+                <button className="btn btn-primary" onClick={() => setDialogJoinChannel(true)}>
+                  Join a public channel
+                </button>
+                {dialogJoinChannel && createPortal(
+                    <div className="overlay"><PublicChannelsPrompt
+                        onClose={() => setDialogJoinChannel(false)}/></div>,
+                    document.body
+                )}
+              </div>
+          )}
+          </p>
         </main>
 
         {/*sidebar on the right for registered users.*/}
@@ -387,7 +394,7 @@ const Dashboard = () => {
 
         {/*context menu for our right click stuff*/}
         {/*two functions for now, join and delete*/}
-        {/*MAybe add the DM directly or like add as friend*/}
+        {/*Maybe add the DM directly or like add as friend*/}
         <ContextMenu
             contextMenuRef={contextMenuRef}
             isToggled={contextMenu.toggled}

@@ -1,7 +1,7 @@
 import {useAuthState} from "react-firebase-hooks/auth";
 import {auth, db} from "../../config/firebase";
 import React, {useEffect, useState} from "react";
-import {arrayUnion, collection, doc, getDocs, updateDoc, addDoc} from "firebase/firestore";
+import {arrayUnion, collection, where, doc, getDocs, updateDoc, addDoc, onSnapshot} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 
@@ -9,17 +9,6 @@ export default function PublicChannelsPrompt({onClose}) {
     const [user] = useAuthState(auth);
     const [privateChannels, setPrivateChannels] = useState([]);
     const navigate = useNavigate();
-
-    const fetchChannels = async () => {
-        const channelRef = collection(db, "privateChannels");
-        const privateQuerySnapshot = await getDocs(channelRef);
-        const privateChannelList = privateQuerySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-
-        setPrivateChannels(privateChannelList);
-    };
 
     const GoToChannel = async (channel) => {
         const members = channel.members;
@@ -40,8 +29,15 @@ export default function PublicChannelsPrompt({onClose}) {
     };
 
     useEffect(() => {
-        fetchChannels();
-    });
+        const unsubscribe = onSnapshot(collection(db, "privateChannels"), (snapshot) => {
+            const filteredChannels = snapshot.docs
+                .filter((doc) => !doc.data().members?.includes(user.email))
+                .map((doc) => ({ id: doc.id, ...doc.data() }));
+            setPrivateChannels(filteredChannels);
+        });
+
+        return () => unsubscribe();
+    }, [user.email])
 
     return (
         <div className = "modal">
