@@ -52,6 +52,32 @@ html, body {
     padding: 15px;
 }
 
+
+.chat-area {
+    height: 100vh; /* Fixed height */
+    overflow-y: auto; /* Enables scrolling */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-area li {
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background: #e6e6e6;
+}
+
+.chat-window {
+    width: 100%;
+    max-width: 99%; /* Adjust as needed */
+    border: 4px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
 /* members */
 .right-column {
     background: white;
