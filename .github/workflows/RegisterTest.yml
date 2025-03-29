@@ -1,0 +1,50 @@
+name: CI/CD for Register Component
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests
+        run: npm test -- --watchAll=false
+
+test_cases:
+  - name: "Renders Register form correctly"
+    run: |
+      import { render, screen } from '@testing-library/react';
+      import Register from '../components/Register';
+      
+      test('renders Register form', () => {
+        render(<Register />);
+        expect(screen.getByText(/Register/i)).toBeInTheDocument();
+      });
+
+  - name: "Handles input changes"
+    run: |
+      import { render, screen, fireEvent } from '@testing-library/react';
+      import Register from '../components/Register';
+      
+      test('updates input fields on change', () => {
+        render(<Register />);
+        const emailInput = screen.getByPlaceholderText('Email');
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+        expect(emailInput.value).toBe('test@example.com');
+      });
