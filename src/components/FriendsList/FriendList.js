@@ -324,10 +324,11 @@ const FriendList = () => {
                 <input
                     value={searchEmail}
                     type="email"
+                    className="input-add-friend"
                     placeholder="Enter user email"
                     onChange={(e) => setSearchEmail(e.target.value)}
                 />
-                <button onClick={searchUsers}>Search</button>
+                <button className="btn-friends" onClick={searchUsers}>Search</button>
                 <ul>
                     {searchResults.map((result) => (
                         <li key={result.id}>
@@ -364,7 +365,7 @@ const FriendList = () => {
                 </ul>
                 {/*Friends END*/}
                 {/*CHAT RETURN FUNCTION*/}
-                <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
+                <button className="back-btn" onClick={ReturnHomePage}>Go back to the Dashboard</button>
             </div>
 
             {/*CHAT START*/}

@@ -7,9 +7,9 @@ html, body {
 
 .app-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 20% 1fr;
     gap: 60px;
-    padding: 20px;
+
     height: 100vh; /* Full viewport height */
     min-height: 100%; /* Fallback */
     overflow-y: auto; /* Scroll only when needed */
@@ -18,11 +18,69 @@ html, body {
 }
 
 .left-column {
+    color: white;
+    padding: 2rem;
     grid-column: 1;
     min-width: 0; /* Important for content containment */
-    background: transparent !important;
+    background: #2c3e50;
     box-shadow: none !important; /* Remove shadows */
     border: none !important; /* Remove borders */
+}
+
+.input-add-friend {
+    background: #eeeeee;
+    color: white;
+    width:100%;
+    padding: 0.5rem 0;
+    border-radius: 0 !important;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-indent: 8px;
+    color: black;
+}
+.input-add-friend:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+    /*pressable buttons btn*/
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0 !important;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-friends {
+    margin-top: 0.5rem;
+    background: #16a34a;
+    color: white;
+    width:100%;
+    padding: 0.5rem 1rem;
+    border-radius: 0 !important;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-friends:hover {
+    background-color: #399c48;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.back-btn {
+    background-color: #6c757d;
+    color: white;
+    margin-top: auto;
+    width: 100%;
+}
+
+.back-btn:hover {
+    background-color: #5a6268;
 }
 
 .right-column {
@@ -51,14 +109,6 @@ html, body {
     height: 300px;
     display: flex;
     flex-direction: column;
-}
-
-/* Fix friends list width */
-.friends-list {
-    list-style: none;
-    padding: 0;
-    width: 100%; /* Changed from max-width */
-    margin: 20px 0;
 }
 
 .chat-container {
@@ -105,7 +155,7 @@ html, body {
     padding: 5px;
     max-width: 400px;
     margin-left: 4px;
-    background-color: #d0f5ed;
+    background-color: #f0f0f0;
     border-left: 3px solid #2196f3;
     font-size: 0.9em;
     color: #555;
@@ -115,8 +165,9 @@ html, body {
 .friends-list {
     list-style: none;
     padding: 0;
-    max-width: 20%;
+    max-width: 100%;
     margin: 20px 0;
+
 }
 
 .friends-list li {
