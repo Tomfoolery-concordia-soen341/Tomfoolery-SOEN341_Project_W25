@@ -1,122 +1,49 @@
-import React, { useEffect, useState, useRef } from "react";
-import { auth, db } from "../../config/firebase";
-import {collection, getDocs, query, where, doc, updateDoc, arrayUnion, addDoc, orderBy, onSnapshot, serverTimestamp, arrayRemove,} from "firebase/firestore";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
+import React, {useEffect, useState, useRef} from "react";
+import {auth, db} from "../../config/firebase";
+import {
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    updateDoc,
+    arrayUnion,
+    addDoc,
+    orderBy,
+    onSnapshot,
+    serverTimestamp,
+    arrayRemove,
+} from "firebase/firestore";
+import {useAuthState} from "react-firebase-hooks/auth";
+import {useNavigate} from "react-router-dom";
+import {formatDistanceToNow} from "date-fns";
 import ContextMenu from "../ContextMenu/ContextMenu";
 import "../ContextMenu/ContextMenu.css";
 import "./FriendList.css";
 
 const styles = {
-  statusDot: {
-    height: "10px",
-    width: "10px",
-    borderRadius: "50%",
-    display: "inline-block",
-    marginRight: "5px",
-  },
-  online: {
-    backgroundColor: "green",
-  },
-  offline: {
-    backgroundColor: "red",
-  },
+    statusDot: {
+        height: "10px",
+        width: "10px",
+        borderRadius: "50%",
+        display: "inline-block",
+        marginRight: "5px",
+    },
+    online: {
+        backgroundColor: "green",
+    },
+    offline: {
+        backgroundColor: "red",
+    },
 };
 
 const FriendList = () => {
-    //data vars
-    const [user, loading] = useAuthState(auth);
+    //user authentication
+    const [user] = useAuthState(auth);
+
+    //searching
     const [searchEmail, setSearchEmail] = useState("");
     const [searchResults, setSearchResults] = useState([]);
-    const [friends, setFriends] = useState([]);
-    const [selectedFriend, setSelectedFriend] = useState(null);
-
-    //message vars
-    const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [offlineMessages, setOfflineMessages] = useState([]);
-    const [quotedMessage, setQuotedMessage] = useState(null); // State for quoted message
-
-    //closing errors + navigate
-    const navigate = useNavigate();
-    const [error, setError] = useState(null);
-    const [confirmation, setConfirmation] = useState(null);
-
-    // context menu vars
-    const contextMenuRef = useRef(null);
-    const chatEndRef = useRef(null);
-    const [FirstSelect, setFirstSelect] = useState(null);
-    const [contextMenu, setContextMenu] = useState({
-      position: {
-      x: 0,
-      y: 0,
-     },
-     toggled: false,
-     message: null, //track the right-clicked message
-    });
-
-    //return function
-    const ReturnHomePage = () => {
-        navigate("/Dashboard");
-    };
-
-    //data fetching functions
-    const fetchFriends = async () => {
-    if (!user) return;
-    const userSnapshot = await getDocs(
-      query(collection(db, "users"), where("email", "==", user.email))
-    );
-    if (!userSnapshot.empty) {
-      const userData = userSnapshot.docs[0].data();
-      const friendEmails = userData.friends || [];
-
-      if (friendEmails.length > 0) {
-        const friendsQuery = query(collection(db, "users"), where("email", "in", friendEmails));
-        const friendsSnapshot = await getDocs(friendsQuery);
-        const friendsData = friendsSnapshot.docs.map((doc) => ({
-          email: doc.data().email,
-          lastSeen: doc.data().lastSeen || null,
-          status: doc.data().status || "inactive",
-        }));
-        setFriends(friendsData);
-      } else {
-        setFriends([]);
-      }
-    }
-  };
-    //fetch offline messages
-    const fetchOfflineMessages = () => {
-    if (!user || !user.email) return () => {};
-
-    const q =
-        query(collection(db, "offlineMessages"),
-        where("recipient", "==", user.email),
-        where("read", "==", false),
-      orderBy("timestamp", "asc")
-    );
-
-    onSnapshot(q, (snapshot) => {
-        const offlineMsgs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setOfflineMessages(offlineMsgs);
-      },
-      (error) => {
-        console.error("Error fetching offline messages:", error);
-        setError(`Failed to load offline messages: ${error.message}`);
-      }
-    );
-  }
-    //continuous update
-    useEffect(() => {
-        updateLastSeen()
-            .then(r =>   fetchFriends())
-            .then( r => fetchOfflineMessages())
-    }, [user, loading]);
-
-    //friend handling
     const searchUsers = async () => {
         if (!searchEmail.trim()) return;
         const usersRef = collection(db, "users");
@@ -127,59 +54,146 @@ const FriendList = () => {
             ...doc.data(),
         }));
         setSearchResults(results);
-};
+    };
+    const closeSearch = () => {
+        setSearchResults([]);
+        setSearchEmail("");
+    };
+
+    //friends
+    const [friends, setFriends] = useState([]);
+    const [selectedFriend, setSelectedFriend] = useState(null);
+    //update friend list when a user gets to the page
+    useEffect(() => {
+        updateLastSeen()
+            .then(r => fetchFriends())
+    }, [user]);
+
+    //friend handling
+    const fetchFriends = async () => {
+        if (!user) return;
+        const userSnapshot = await getDocs(
+            query(collection(db, "users"), where("email", "==", user.email))
+        );
+        if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            const friendEmails = userData.friends || [];
+
+            if (friendEmails.length > 0) {
+                const friendsQuery = query(collection(db, "users"), where("email", "in", friendEmails));
+                const friendsSnapshot = await getDocs(friendsQuery);
+
+                const friendsData = friendsSnapshot.docs.map((doc) => ({
+                    id: doc.id, // the random document ID
+                    ...doc.data(), // all user data including email, status, etc.
+                }));
+
+                // Create a map for quick lookup by email
+                const membersMap = {};
+                friendsData.forEach((friend) => {
+                    membersMap[friend.email] = friend;
+                });
+
+                // Combine with original member list to maintain order
+                const allFriends = friendEmails.map((email) => ({
+                    email,
+                    ...(membersMap[email] || {status: "unknown"}), // fallback if user not found
+                }));
+
+                setFriends(allFriends);
+            } else {
+                setFriends([]);
+            }
+        }
+    };
     const addFriend = async (friend) => {
-    if (!user || friend.email === user?.email) {
-      setError("You cannot add yourself as a friend!");
-      return;
-    }
+        if (!user || friend.email === user?.email) {
+            setError("You cannot add yourself as a friend!");
+            return;
+        }
 
-    if (friends.some(f => f.email === friend.email)) {
-        setError("You are already friends with this person.");
-        console.log("success")
-        return;
-    }
+        if (friends.some(f => f.email === friend.email)) {
+            setError("You are already friends with this person.");
+            console.log("success")
+            return;
+        }
 
-    await updateDoc(doc(db, "users", user.uid), { friends: arrayUnion(friend.email) });
-    setFriends((prevFriends) => [
-      ...prevFriends,
-      {
-        email: friend.email,
-        lastSeen: friend.lastSeen || null,
-        status: friend.status || "inactive",
-      },
-    ]);
-    setSearchEmail("");
-    setConfirmation("User added as friend!");
-  };
+        await updateDoc(doc(db, "users", user.uid), {friends: arrayUnion(friend.email)});
+        setFriends((prevFriends) => [
+            ...prevFriends,
+            {
+                email: friend.email,
+                lastSeen: friend.lastSeen || null,
+                status: friend.status || "inactive",
+            },
+        ]);
+        setSearchEmail("");
+        setConfirmation("User added as friend!");
+    };
     const removeFriend = async (friendEmail) => {
-    if (!user || !friendEmail) return;
-    try {
-      await updateDoc(doc(db, "users", user.uid), { friends: arrayRemove(friendEmail) });
-      setFriends((prevFriends) =>
-        prevFriends.filter((friend) => friend.email !== friendEmail)
-      );
-      setSelectedFriend(null);
-      setConfirmation("User removed from friends list!");
-    } catch (err) {
-      setError("Failed to remove friend. Please try again.");
-    }
-  };
+        if (!user || !friendEmail) return;
+        try {
+            await updateDoc(doc(db, "users", user.uid), {friends: arrayRemove(friendEmail)});
+            setFriends((prevFriends) =>
+                prevFriends.filter((friend) => friend.email !== friendEmail)
+            );
+            setSelectedFriend(null);
+            setConfirmation("User removed from friends list!");
+        } catch (err) {
+            setError("Failed to remove friend. Please try again.");
+        }
+    };
     const selectFriend = async (friend) => {
-    if (selectedFriend === friend) {
-      setSelectedFriend(null); //closes the opened tab.
-    }
-    else {
-      //set the friend as the selected one
-      setSelectedFriend(friend);
-      setFirstSelect(friend)
-      const chatId = [user.email, friend].sort().join("_");
-      const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp"));
-      onSnapshot(q, (snapshot) => {
-        setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      });
-    }
-  };
+        if (selectedFriend === friend) {
+            setSelectedFriend(null); //closes the opened tab.
+        } else {
+            //set the friend as the selected one
+            setSelectedFriend(friend);
+            setFirstSelect(friend)
+            const chatId = [user.email, friend].sort().join("_");
+            const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp"));
+            onSnapshot(q, (snapshot) => {
+                setMessages(snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()})));
+            });
+        }
+    };
+
+    //messaging
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState("");
+    const [quotedMessage, setQuotedMessage] = useState(null);
+
+    //message function
+    const sendMessage = async () => {
+        if (!newMessage.trim() || !selectedFriend) return;
+        const chatId = [user.email, selectedFriend].sort().join("_");
+        const messagesRef = collection(db, "chats", chatId, "messages");
+        await addDoc(messagesRef, {
+            text: newMessage,
+            sender: user.email,
+            timestamp: serverTimestamp(),
+            quotedMessage: quotedMessage
+                ? {
+                    sender: quotedMessage.sender,
+                    text: quotedMessage.text,
+                }
+                : null, // Include quoted message details
+        });
+        setNewMessage("");
+        setQuotedMessage(null); // Clear quoted message after sending
+    };
+    const closeChat = () => {
+        setSelectedFriend(null);
+        setMessages([]);
+    };
+
+    //errors
+    const [error, setError] = useState(null);
+    const [confirmation, setConfirmation] = useState(null);
+    const closeError = () => setError(null);
+    const closeConfirmation = () => setConfirmation(null);
+
+    //update status
     const updateLastSeen = async () => {
         if (!user) return;
         const userRef = doc(db, "users", user.uid);
@@ -188,55 +202,29 @@ const FriendList = () => {
             status: "active", // Set status to active on login
         });
     };
-
-    //message handling
-    const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedFriend) return;
-    const chatId = [user.email, selectedFriend].sort().join("_");
-    const messagesRef = collection(db, "chats", chatId, "messages");
-    await addDoc(messagesRef, {
-      text: newMessage,
-      sender: user.email,
-      timestamp: serverTimestamp(),
-      quotedMessage: quotedMessage
-          ? {
-            sender: quotedMessage.sender,
-            text: quotedMessage.text,
-          }
-          : null, // Include quoted message details
-    });
-    setNewMessage("");
-    setQuotedMessage(null); // Clear quoted message after sending
-  };
-    const markOfflineMessageAsRead = async (messageId) => {
-    const messageRef = doc(db, "offlineMessages", messageId);
-    await updateDoc(messageRef, { read: true });
-  };
-
-    //closing functions
-    const closeError = () => setError(null);
-    const closeConfirmation = () => setConfirmation(null);
-    const CloseSearch = () => {
-    setSearchResults([]);
-    setSearchEmail("");
-  };
-    const CloseChat = () => {
-    setSelectedFriend(null);
-    setMessages([]);
-  };
-
-    //information (sprint 3)
     const formatLastSeen = (timestamp, status) => {
-    if (status === "active") return "Online";
-    if (!timestamp) return "Offline";
-    const date = timestamp.toDate();
-    return `Last seen: ${formatDistanceToNow(date, { addSuffix: true })}`;
-  };
+        if (status === "active") return "Online";
+        if (!timestamp) return "Offline";
+        const date = timestamp.toDate();
+        return `Last seen: ${formatDistanceToNow(date, {addSuffix: true})}`;
+    };
     const isOnline = (status) => {
-    return status === "active";
-  };
+        return status === "active";
+    };
 
     //context menu
+    const contextMenuRef = useRef(null);
+    const chatEndRef = useRef(null);
+    const [FirstSelect, setFirstSelect] = useState(null);
+    const [contextMenu, setContextMenu] = useState({
+        position: {
+            x: 0,
+            y: 0,
+        },
+        toggled: false,
+        message: null, //track the right-clicked message
+    });
+
     const handleOnContextMenu = (e, rightClick) => {
         e.preventDefault();
 
@@ -293,34 +281,143 @@ const FriendList = () => {
             message: null, // Clear the right-clicked message
         });
     };
-    //re-attach the listener when the menu is toggled
+    //when you press an empty space context menu closes
     useEffect(() => {
-      function handler(e) {
-          if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
-              resetContextMenu();
-          }
-      }
-      document.addEventListener("click", handler);
+        function handler(e) {
+            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+                resetContextMenu();
+            }
+        }
+
+        document.addEventListener("click", handler);
         return () => {
-          document.removeEventListener("click", handler);
+            document.removeEventListener("click", handler);
         };
-      },[contextMenu.toggled]);
+    }, [contextMenu.toggled]);
     //prevents permanent auto-scrolling. only on send message and first time pressing on friend.
     useEffect(() => {
         if (chatEndRef.current) {
             if (selectedFriend && newMessage) {
-                chatEndRef.current.scrollIntoView({behavior: "smooth"});
+                chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "auto" : "smooth"});
             }
             if (FirstSelect) {
 
-                chatEndRef.current.scrollIntoView({behavior: "smooth"});
+                chatEndRef.current.scrollIntoView({behavior: selectedFriend ? "auto" : "smooth"});
                 setFirstSelect(null)
             }
         }
     }, [messages, selectedFriend]);
 
-      return (
-        <div>
+    //navigation
+    const navigate = useNavigate();
+    //navigate to dashboard
+    const ReturnHomePage = () => {
+        navigate("/Dashboard");
+    };
+
+    //css and display
+    return (
+        <div className="app-layout">
+            <div className="left-column">
+                {/*Add Friends START*/}
+                <h2>Add Friends</h2>
+                <input
+                    value={searchEmail}
+                    type="email"
+                    placeholder="Enter user email"
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                />
+                <button onClick={searchUsers}>Search</button>
+                <ul>
+                    {searchResults.map((result) => (
+                        <li key={result.id}>
+                            {result.email}{" "}
+                            <button onClick={() => addFriend(result)}>Add</button>
+                            <button onClick={closeSearch}>Return</button>
+                        </li>
+                    ))}
+                </ul>
+                {/*Add Friends END*/}
+
+                {/*Friends START*/}
+                <h2>Friends</h2>
+                <ul className={"friends-list"}>
+                    {friends.length > 0 ? (
+                        friends.map((friend, index) => (
+                            <li key={index} onClick={() => selectFriend(friend.email)}>
+                    <span
+                        style={{
+                            ...styles.statusDot,
+                            ...(isOnline(friend.status)
+                                ? styles.online
+                                : styles.offline),
+                        }}
+                    >
+                    </span>
+                                {friend.username}{" "}
+                                <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
+                            </li>
+                        ))
+                    ) : (
+                        <p>No friends added yet</p>
+                    )}
+                </ul>
+                {/*Friends END*/}
+                {/*CHAT RETURN FUNCTION*/}
+                <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
+            </div>
+
+            {/*CHAT START*/}
+            <div className="right-column">
+                {selectedFriend && (
+                    <div>
+                        <h2>Chat with {selectedFriend}</h2>
+                        <div className="chat-container">
+                            <ul className="chat-window">
+                                {messages.map((msg, index) => (
+                                    <li
+                                        key={index}
+                                        onContextMenu={(e) => handleOnContextMenu(e, msg)}
+                                        className={msg.selected ? "selected" : ""}
+                                    >
+                                        <strong>{msg.sender}:</strong> {msg.text}
+                                        {msg.quotedMessage && (
+                                            <div className="quoted-message">
+                                                <p>
+                                                    <strong>Quoting {msg.quotedMessage.sender}:</strong> {msg.quotedMessage.text}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                                <div ref={chatEndRef}></div>
+                            </ul>
+                        </div>
+                        {quotedMessage && (
+                            <div className="quoted-message">
+                                <p>
+                                    <strong>Quoting {quotedMessage.sender}:</strong> {quotedMessage.text}
+                                </p>
+                                <button onClick={() => setQuotedMessage(null)}>Remove Quote</button>
+                            </div>
+                        )}
+                        <input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
+                        />
+                        <button onClick={sendMessage}>Send</button>
+                        <p>
+                            <button onClick={closeChat}>Close Chat</button>
+                            <button onClick={() => removeFriend(selectedFriend)}>
+                                Remove Friend
+                            </button>
+                        </p>
+                    </div>
+                )}
+                {/*CHAT END*/}
+            </div>
+            {/*context menu*/}
             <ContextMenu
                 contextMenuRef={contextMenuRef}
                 isToggled={contextMenu.toggled}
@@ -339,51 +436,8 @@ const FriendList = () => {
                     },
                 ]}
             />
-          <h2>Add Friends</h2>
-          <input
-            value={searchEmail}
-            type="email"
-            placeholder="Enter user email"
-            onChange={(e) => setSearchEmail(e.target.value)}
-          />
-          <button onClick={searchUsers}>Search</button>
-          <ul>
-            {searchResults.map((result) => (
-              <li key={result.id}>
-                {result.email}{" "}
-                <button onClick={() => addFriend(result)}>Add</button>
-                <button onClick={CloseSearch}>Return</button>
-              </li>
-            ))}
-          </ul>
 
-          <h2>Friends</h2>
-          <ul>
-            {friends.length > 0 ? (
-              friends.map((friend, index) => (
-                  <li
-                      className="Friends List"
-                      key={index}
-                      onClick={() => selectFriend(friend.email)}
-                  >
-                    <span
-                        style={{
-                            ...styles.statusDot,
-                            ...(isOnline(friend.status)
-                                ? styles.online
-                                : styles.offline),
-                        }}
-                    >
-                    </span>
-                      {friend.email}{" "}
-                      <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
-                  </li>
-              ))
-            ) : (
-                <p>No friends added yet</p>
-            )}
-          </ul>
-
+            {/*Error handling START*/}
             {error && (
                 <div className="error-popup">
                     <div className="error-content">
@@ -391,81 +445,20 @@ const FriendList = () => {
                         <p>{error}</p>
                         <button onClick={closeError}>Close</button>
                     </div>
-            </div>
-          )}
-          {confirmation && (
-            <div className="confirmation-popup">
-              <div className="confirmation-content">
-                <h3>Confirmation</h3>
-                <p>{confirmation}</p>
-                <button onClick={closeConfirmation}>Close</button>
-              </div>
-            </div>
-          )}
-            {selectedFriend && (
-            <div>
-            <h2>Chat with {selectedFriend}</h2>
-            <div className="chat-container">
-                <ul className="chat-window">
-                    {messages.map((msg, index) => (
-                        <li
-                            key={index}
-                            onContextMenu={(e) => handleOnContextMenu(e, msg)}
-                            className={msg.selected ? "selected" : ""}
-                        >
-                            <strong>{msg.sender}:</strong> {msg.text}
-                            {msg.quotedMessage && (
-                                <div className="quoted-message">
-                                    <p>
-                                        <strong>Quoting {msg.quotedMessage.sender}:</strong> {msg.quotedMessage.text}
-                                    </p>
-                                </div>
-                            )}
-                        </li>
-                    ))}
-                    <div ref={chatEndRef}></div>
-                </ul>
-            </div>
-            {quotedMessage && (
-                <div className="quoted-message">
-                    <p>
-                        <strong>Quoting {quotedMessage.sender}:</strong> {quotedMessage.text}
-                    </p>
-                    <button onClick={() => setQuotedMessage(null)}>Remove Quote</button>
                 </div>
-                )}
-              <input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-              />
-              <button onClick={sendMessage}>Send</button>
-              <p>
-                <button onClick={CloseChat}>Close Chat</button>
-                <button onClick={() => removeFriend(selectedFriend)}>
-                  Remove Friend
-                </button>
-              </p>
-            </div>
-          )}
-            <h2>Offline Messages</h2>
-            {offlineMessages.length > 0 ? (
-                <ul>
-                    {offlineMessages.map((msg) => (
-                        <li key={msg.id}>
-                            <strong>From: {msg.sender}</strong> - {msg.text}{" "}
-                            <button onClick={() => markOfflineMessageAsRead(msg.id)}>
-                                Mark as Read
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>No offline messages.</p>
             )}
-          <button onClick={ReturnHomePage}>Go back to the Dashboard</button>
+            {confirmation && (
+                <div className="confirmation-popup">
+                    <div className="confirmation-content">
+                        <h3>Confirmation</h3>
+                        <p>{confirmation}</p>
+                        <button onClick={closeConfirmation}>Close</button>
+                    </div>
+                </div>
+            )}
+            {/*Error handling END*/}
         </div>
-      );
+    );
 }
 
 export default FriendList;

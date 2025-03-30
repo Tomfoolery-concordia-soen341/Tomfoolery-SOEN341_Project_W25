@@ -1,95 +1,89 @@
-/* Layout Styles */
-.app-layout {
-    display: grid;
-    grid-template-columns: 250px 1fr 400px;
-    height: 100%;
-    overflow: hidden;
-    gap: 20px;
-    padding: 20px;
-    background-color: #f5f7fa;
-}
 html, body {
     height: 100%;
+    width: 100%;
     overflow: hidden; /* Disables scrolling on the entire page */
     margin: 0;
     padding: 0;
 }
 
-/*oder of columns*/
-.middle-column { order: 2; }
-.left-column { order: 1; }
-.right-column { order: 3; }
-
-.left-column,
-.middle-column,
-.right-column {
-    display: flex;
-    flex-direction: column;
-    height: 50%;
+/* Layout Styles */
+.channel-layout {
+    display: grid;
+    grid-template-columns: 20% 60% 20%;
+    grid-template-rows: 100vh; /* Full viewport height */
+    background-color: #f8f9fa;
+    will-change: transform;
 }
 
 /* channel information */
-.left-column {
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.channel-info-column {
+    order:1;
+    padding: 2rem;
+    margin: 0 auto;
+    width: 100%;
+    background: #2c3e50;
+    box-sizing: border-box;
 }
 
 /*chat itself*/
-.middle-column {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.channel-chat-column {
+    order: 2;
     display: flex;
     flex-direction: column;
+    height: 83vh;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    background: transparent !important;
+    box-shadow: none !important; /* Remove shadows */
+    border: none !important; /* Remove borders */
+}
+
+/* members */
+.channel-members-column {
+    order: 3;
+    display: flex;
+    flex-direction: column;
+    box-shadow: none !important; /* Remove shadows */
+    border: none !important; /* Remove borders */
+    padding: 15px;
+    background: #2c3e50;
+    color: #ffffff;
+    box-sizing: border-box;
 }
 
 .chat-area {
     display: flex;
     flex-direction: column;
-    height: 70%;
+    height: 100%;
     padding: 15px;
 }
 
-/* members */
-.right-column {
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.reply-message {
+    max-width: 98%;
+    margin-left: 4px;
+    background-color: #f0fffc;
+    border-left: 3px solid #2196f3;
+    font-size: 0.9em;
+    color: #555;
 }
+
+.reply-message-preview {
+    margin-top: 5px;
+    padding: 10px;
+    max-width: 95%;
+    margin-left: 4px;
+    background-color: #d1e3ff;
+    border-left: 3px solid #2196f3;
+    font-size: 0.9em;
+    color: #555;
+}
+
 
 .channel-info {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-/*  for scrollables like members and chat*/
-.scrollable-content {
-    overflow-y: auto;
-    max-height: 100%;
-    padding-right: 10px;
-}
-
-/* custom scrollbar */
-.scrollable-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.scrollable-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+    color: #ffffff;
 }
 
 /* chat stuff */
@@ -110,15 +104,29 @@ html, body {
     flex-grow: 1;
     padding: 12px 15px;
     border: 1px solid #ddd;
-    border-radius: 8px;
     font-size: 16px;
+}
+
+.new-message-notification {
+    top: 10px;
+    position: relative;
+    background-color: #4a76a8;
+    color: white;
+    padding: 8px 16px;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.new-message-notification:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 /* buttons */
 button {
     padding: 10px 15px;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
     transition: all 0.2s;
@@ -156,7 +164,6 @@ button {
 .status-indicator {
     width: 10px;
     height: 10px;
-    border-radius: 50%;
     display: inline-block;
 }
 
@@ -167,24 +174,4 @@ button {
 
 .status-offline {
     background: #95a5a6;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 1024px) {
-    .app-layout {
-        grid-template-columns: 200px 1fr 200px;
-    }
-}
-
-@media (max-width: 768px) {
-    .app-layout {
-        grid-template-columns: 1fr;
-        height: auto;
-    }
-
-    .left-column,
-    .right-column {
-        height: auto;
-        max-height: 300px;
-    }
 }
