@@ -18,12 +18,14 @@ const ContextMenu = ({
             ref={contextMenuRef}
         >
             {buttons.map((button, index) => {
+
+                if (button.show === false) return null;
+                if (button.isSpacer) return <hr key={index} />;
+
                 function handleClick(e) {
                     e.stopPropagation();
                     button.onClick(e, rightClickItem);
                 }
-
-                if (button.isSpacer) return <hr key={index} />;
 
                 return (
                     <button

@@ -1,48 +1,23 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/Login/Login";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Register from "./components/Register";
-import AdminDash from "./components/Admin/AdminDash";
-import AdminChannel from "./components/Admin/AdminChannel";
-import MemberDash from "./components/Member/MemberDash";
-import MemberChannel from "./components/Member/MemberChannel";
-import MembersFriendsList from "./components/Member/MemberFriendsList";
-import AdminsFriendsList from "./components/Admin/AdminFriendsList";
-import PrivateChannel from "./components/PrivateChannel";
+import Register from "./components/Login/Register";
+import FriendList from "./components/FriendsList/FriendList";
+import Channel from "./components/Channels/Channel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
-
+import Dashboard from "./components/Dashboard/Dashboard"
+import ProfilePage from "./components/Profile/ProfilePage";
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        <Route
-          path="/Admin"
-          element={
-            <ProtectedRoute>
-              <AdminDash />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="" />
-        <Route
-          path="/Member"
-          element={
-            <ProtectedRoute>
-              <MemberDash />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="" />
-        <Route path="/Afriends" element={<AdminsFriendsList />} />
-        <Route path="/channelA/:id" element={<AdminChannel />} />
-        <Route path="/privchannel/:id" element={<PrivateChannel />} />
-        <Route path="/Mfriends" element={<MembersFriendsList />} />
-        <Route path="/channelM/:id" element={<MemberChannel />} />
+        <Route path="/friends" element={<FriendList />} />
+        <Route path="/channel/:id" element={<Channel />} />
         <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/Profile" element={<ProfilePage />} />
       </Routes>
     </Router>
   );
