@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../config/firebase";
+import { auth, db } from "../../config/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import "./Login/Style.css";
+import "./Style.css";
 
 const Register = () => {
   const [RegisterEmail, setRegisterEmail] = useState("");
   const [RegisterPassword, setRegisterPassword] = useState("");
+  const [RegisterUsername, setRegisterUsername] = useState("");
   const [role, setRole] = useState("");
   const navigate = useNavigate();
 
@@ -18,20 +19,21 @@ const Register = () => {
         auth,
         RegisterEmail,
         RegisterPassword
-        // role
       );
       const user = userCredential.user;
       await setDoc(doc(db, "users", user.uid), {
+        username: RegisterUsername,
         email: RegisterEmail,
         role: role,
         lastSeen: serverTimestamp(),
         status: "active",
       });
-      navigate("/"); // Redirect to dashboard after login
+      navigate("/");
     } catch (error) {
       alert(error.message);
     }
   };
+
   const Back = () => {
     navigate("/");
   };
@@ -43,8 +45,21 @@ const Register = () => {
           <h1 className="Register">Register</h1>
           <form onSubmit={Register} className="FormRegister">
             <div>
-              <label className="Email">Email</label>
+              <label htmlFor="username" className="Username">Username</label>
               <input
+                id="username"
+                className="InputUsername"
+                type="text" // Changed from "Username" to "text"
+                placeholder="Username"
+                value={RegisterUsername} // Fixed to use RegisterUsername
+                onChange={(e) => setRegisterUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="Email">Email</label>
+              <input
+                id="email"
                 className="InputEmail"
                 type="email"
                 placeholder="Email"
@@ -54,8 +69,9 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="Password">Password</label>
+              <label htmlFor="password" className="Password">Password</label>
               <input
+                id="password"
                 className="InputPassword"
                 type="password"
                 placeholder="Password"
@@ -65,10 +81,10 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="Role">Role</label>
+              <label htmlFor="role" className="Role">Role</label>
               <select
+                id="role"
                 className="RoleSelect"
-                // w-full p-2 border border-gray-300 rounded-lg
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 required
@@ -83,11 +99,12 @@ const Register = () => {
             </button>
           </form>
           <h1 onClick={Back} className="GoToLogin">
-            Go back to log in{" "}
+            Go back to log in
           </h1>
         </div>
       </div>
     </div>
   );
 };
+
 export default Register;
