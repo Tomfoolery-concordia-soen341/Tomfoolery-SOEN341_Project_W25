@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import "./ProfilePage.css";
 
 const ProfilePage = () => {
-  const [user, loading] = useAuthState(auth);
+  const [user] = useAuthState(auth);
 
   //change username
   const [formData, setFormData] = useState({

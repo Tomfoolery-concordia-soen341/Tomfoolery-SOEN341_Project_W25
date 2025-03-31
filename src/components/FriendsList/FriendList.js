@@ -345,16 +345,8 @@ const FriendList = () => {
                 <ul className={"friends-list"}>
                     {friends.length > 0 ? (
                         friends.map((friend, index) => (
-                            <li key={index} onClick={() => selectFriend(friend.email)}>
-                    <span
-                        style={{
-                            ...styles.statusDot,
-                            ...(isOnline(friend.status)
-                                ? styles.online
-                                : styles.offline),
-                        }}
-                    >
-                    </span>
+                            <li key={index} onClick={() => selectFriend(friend.email)} data-testid={`friend-item-${friend.email}`} >
+                    <span style={{...styles.statusDot, ...(isOnline(friend.status) ? styles.online : styles.offline),}}></span>
                                 {friend.username}{" "}
                                 <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
                             </li>
