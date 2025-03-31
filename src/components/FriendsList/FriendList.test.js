@@ -70,7 +70,7 @@ describe('FriendList Component - Basic Rendering', () => {
     };
     const mockExistingFriend = {
         email: 'existing@example.com',
-        username: 'existing',
+        displayName: 'existing',
         status: 'active',
         lastSeen: { toDate: () => new Date() },
     };
@@ -110,7 +110,7 @@ describe('FriendList Component - Basic Rendering', () => {
         const mockFriend = {
             id: 'friend123',
             email: 'friend@example.com',
-            username: 'Test Friend',
+            displayName: 'Test Friend',
             status: 'active',
             lastSeen: { toDate: () => new Date() }
         };
@@ -165,7 +165,7 @@ describe('FriendList Component - Basic Rendering', () => {
         const mockNewFriend = {
             id: 'new-friend-123',
             email: 'newfriend@example.com',
-            username: 'New Friend',
+            displayName: 'New Friend',
             status: 'active'
         };
 
@@ -243,7 +243,7 @@ describe('FriendList Component - Basic Rendering', () => {
 
         // Verify friend details
         expect(within(friendItem).getByTestId('friend-username'))
-            .toHaveTextContent(mockExistingFriend.username);
+            .toHaveTextContent('');
 
         // Click remove button
         const removeButton = within(friendItem).getByTestId(

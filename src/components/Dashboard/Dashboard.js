@@ -1,14 +1,22 @@
 import React, {useEffect, useRef, useState} from "react";
 import {auth, db} from "../../config/firebase";
 import {signOut} from "firebase/auth";
-import {doc, getDocs, collection, query, where, updateDoc, serverTimestamp, onSnapshot,} from "firebase/firestore";
+import {
+    doc,
+    getDocs,
+    collection,
+    query,
+    where,
+    updateDoc,
+    serverTimestamp,
+    onSnapshot,
+    addDoc, arrayUnion,
+} from "firebase/firestore";
 import {useAuthState} from "react-firebase-hooks/auth";
 import {useNavigate} from "react-router-dom";
 import {deleteDoc} from "firebase/firestore";
 import {getDoc} from "firebase/firestore";
 import {createPortal} from "react-dom";
-import NewChannelPrompt from "../Channels/NewChannelPrompt";
-import PublicChannelsPrompt from "../Channels/PublicChannelsPrompt";
 
 import "../Channels/Modal.css"
 import {formatDistanceToNow} from "date-fns";
@@ -21,7 +29,6 @@ import "./Dashboard.css";
 
 const Dashboard = () => {
     const [user] = useAuthState(auth);
-    const [username, setUsername] = useState('');
     const [channels, setChannels] = useState([]);
     const [defaultChannels, setDefaultChannels] = useState([]);
     const [privateChannels, setPrivateChannels] = useState([]);
@@ -39,6 +46,7 @@ const Dashboard = () => {
     //get channel data
     const fetchData = async () => {
         // Fetch roles
+        console.log (user)
         const userDoc = await getDoc(doc(db, "users", user.uid));
         //check if you are an admin
         const isAdmin = userDoc.data().role === "admin";
@@ -46,28 +54,23 @@ const Dashboard = () => {
 
         //get default channels
         const channelRef = collection(db, "channels");
-        const BaseChannels = query(channelRef, where("isDefault", "==", true));
-        const defaultQuerySnapshot = await getDocs(BaseChannels);
+        const defaultChannels = query(channelRef, where("isDefault", "==", true));
+        const privateChannels = query(channelRef, where("isDefault", "==", false));
+
+        //load the public channels, everyone can see them
+        const defaultQuerySnapshot = await getDocs(defaultChannels);
         const defaultChannelList = defaultQuerySnapshot.docs.map((doc) => ({
             id: doc.id, ...doc.data(),
         }));
         setDefaultChannels(defaultChannelList);
 
         //if admin, you get all channels
-        if (isAdmin) {
-            const privateQuerySnapshot = await getDocs(collection(db, "privateChannels"));
+            const privateQuerySnapshot = await getDocs(privateChannels);
             const privateChannelList = privateQuerySnapshot.docs.map((doc) => ({
                 id: doc.id, ...doc.data(),
             }));
             setPrivateChannels(privateChannelList);
-        } else {
-            //if not, you are member, only get access to the channels you are invited to
-            const privateQuerySnapshot = await getDocs(query(collection(db, "privateChannels"), where("members", "array-contains", user.email)));
-            const privateChannelList = privateQuerySnapshot.docs.map((doc) => ({
-                id: doc.id, ...doc.data(),
-            }));
-            setPrivateChannels(privateChannelList);
-        }
+
     };
     const fetchAllUsers = () => {
         if (!user) return;
@@ -75,7 +78,7 @@ const Dashboard = () => {
         const unsubscribe = onSnapshot(usersRef, (snapshot) => {
             const usersData = snapshot.docs
                 .map((doc) => ({
-                    username: doc.data().username,
+                    displayName: doc.data().displayName,
                     email: doc.data().email,
                     lastSeen: doc.data().lastSeen || null,
                     status: doc.data().status || "inactive",
@@ -89,18 +92,9 @@ const Dashboard = () => {
         return unsubscribe;
     };
 
-    //update the username constantly
-    useEffect(() => {
-        if (user) {
-            const fetchUsername = async () => {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    setUsername(userDoc.data().username || user.email); // Fallback to email if no username
-                }
-            };
-            fetchUsername().then(r => null);
-        }
-    }, [user]);
+    useEffect (() => {
+
+    })
 
     // context menu vars
     const contextMenuRef = useRef(null);
@@ -126,7 +120,24 @@ const Dashboard = () => {
     };
 
     const GoToChannel = (channel) => {
-        navigate(`/privchannel/${channel.id}`, {state: {channel}});
+        navigate(`/channel/${channel.id}`, {state: {channel}});
+    };
+
+    const GoToPrivateChannel = async (channel) => {
+        const members = channel.members;
+        //const request = channel.request;
+        const check = (element) => element === user.email;
+        console.log(members);
+        if(members.some(check)) {
+            navigate(`/channel/${channel.id}`, { state: { channel } });
+        } else {
+            const channelRef = doc(db, "channels", channel.id);
+            await updateDoc(channelRef, {
+                request: arrayUnion(user.email)
+            });
+
+            alert("Requested to join");
+        }
     };
 
     const GoToProfile = () => {
@@ -149,6 +160,11 @@ const Dashboard = () => {
             alert("Failed to log out properly.");
         }
     };
+
+
+    //channels
+    const [channelName, setChannelName] = useState("");
+    const [privacy, setPrivacy] = useState(false);
 
     const DeleteChannel = async (channelId) => {
         if (!channelId) {
@@ -173,13 +189,46 @@ const Dashboard = () => {
                 await deleteDoc(doc(db, "channels", channelId));
                 setDefaultChannels((prevChannels) => prevChannels.filter((channel) => channel.id !== channelId));
             } else {
-                await deleteDoc(doc(db, "privateChannels", channelId));
+                await deleteDoc(doc(db, "channels", channelId));
                 setPrivateChannels((prevChannels) => prevChannels.filter((channel) => channel.id !== channelId));
             }
             alert("Channel deleted successfully.");
         } catch (error) {
             console.error("Error deleting channel:", error);
             alert("Failed to delete channel.");
+        }
+    };
+
+    const CreateChannel = async (channelName) => {
+        if (channelName) {
+            const channelRef = collection(db, "channels");
+            const q = query(channelRef, where("name", "==", channelName));
+            const querySnapshot = await getDocs(q);
+
+            console.log(privacy, admin, querySnapshot.empty)
+            //to regular channels
+            if (querySnapshot.empty && !privacy && admin) {
+                const newChannel = await addDoc(channelRef, {
+                    name: channelName,
+                    members: [user.email], // Initialize with an empty members array
+                    isDefault: !privacy,
+                });
+
+                //to private channels
+            } else if (querySnapshot.empty && (privacy || !admin)) {
+                const newChannel = await addDoc(channelRef, {
+                    name: channelName,
+                    owner: user.email,
+                    members: [user.email], // Initialize with an empty members array
+                    isDefault: !privacy
+                });
+
+            } else {
+                alert("Channel already exists");
+            }
+        }
+        else {
+            alert ("Enter a channel name!")
         }
     };
 
@@ -231,9 +280,12 @@ const Dashboard = () => {
             document.removeEventListener("click", handler);
         };
     }, [contextMenu.toggled]); // Re-attach the listener when the menu is toggled
+    //after you create a channel, you will fetch the new channels
     useEffect(() => {
+        if (!user) return;
         fetchData().then(r => fetchAllUsers())
-    }, [dialogShow]);
+    }, [dialogShow,defaultChannels,privateChannels, user]);
+
 
     return (<div className="dashboard-layout">
         {/*information and dashboard */}
@@ -242,7 +294,7 @@ const Dashboard = () => {
             <div className="user-controls">
                 <div className="user-info">
                     <div>
-                        <div className="user-name">Welcome back, {username || user?.email}!</div>
+                        <div className="user-name">Welcome back, {user.displayName}!</div>
                         <div className="user-role">{admin ? "Admin" : "Member"} </div>
                     </div>
                 </div>
@@ -262,28 +314,49 @@ const Dashboard = () => {
             {/*channels and display of each channel by buttons*/}
             <section className="channel-management">
                 <div className="create-channel">
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => setDialogShow(true)}
-                    >
+                    <button className="btn btn-primary" onClick={() => setDialogShow(true)}>
                         Create New Channel
                     </button>
-                    {dialogShow && createPortal(<div className="overlay">
-                        <NewChannelPrompt onClose={() => setDialogShow(false)}/>
-                    </div>, document.body)}
+                    {dialogShow ? <div className="overlay">
+                        <div className="modal">
+                            <p>
+                                <div>
+                                    <label>
+                                        Channel Name:
+                                        <input value={channelName} type="text" placeholder="Enter Channel Name"
+                                               onChange={(e) => setChannelName(e.target.value)}/>
+                                    </label>
+                                </div>
+                                <p></p>
+                                {admin ? <div>
+                                    <div>
+                                        <label>
+                                            Make private?
+                                            <input value={privacy} type="checkbox"
+                                                   onChange={(e) => setPrivacy(e.target.checked)}/>
+                                        </label>
+                                    </div>
+                                </div> : null}
+                            </p>
+                            <div>
+                                <button onClick={() => {
+                                    CreateChannel(channelName)
+                                        .then(r => setDialogShow(false))//clear the dialog
+                                        .then(r => setChannelName(null))// clear the channel name
+                                        .then(r => setPrivacy(false))   // reset privacy checkbox)
+                                }}>
+                                    Create
+                                </button>
+                                <button onClick={() => setDialogShow(false)}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div> : null}
                 </div>
             </section>
-            <p>
-                {!admin && !owner && (<div>
-
-                    <button className="btn btn-primary" onClick={() => setDialogJoinChannel(true)}>
-                        Join a public channel
-                    </button>
-                    {dialogJoinChannel && createPortal(<div className="overlay"><PublicChannelsPrompt
-                        onClose={() => setDialogJoinChannel(false)}/></div>, document.body)}
-                </div>)}
-            </p>
         </div>
+
         <div className="mid-column">
             {/*list of channels*/}
             <div className="channels-container">
@@ -301,6 +374,7 @@ const Dashboard = () => {
                         </div>))}
                     </div>
                 </div>
+
                 {/*private channels here*/}
                 <div className="channel-section">
                     <h2>Private Channels</h2>
@@ -309,7 +383,7 @@ const Dashboard = () => {
                             key={channel.id}
                             className="channel-card"
                             onContextMenu={(e) => handleOnContextMenu(e, channel)}
-                            onClick={() => GoToChannel(channel)}
+                            onClick={() => GoToPrivateChannel(channel)}
                         >
                             <span className="channel-name">{channel.name}</span>
                         </div>))}
@@ -326,7 +400,7 @@ const Dashboard = () => {
                     <span
                         className={`status-indicator ${isOnline(user.status) ? 'status-online' : 'status-offline'}`}></span>
 
-                    <span className="username">{user.username}</span>
+                    <span className="username">{user.displayName}</span>
                     {/*<span className="user-role">{user.role}</span>*/}
 
                     <div className="user-status">

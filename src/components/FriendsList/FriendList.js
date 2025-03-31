@@ -358,7 +358,7 @@ const FriendList = () => {
                                 data-testid={`friend-item-${friend.email}`}>
                                 <span
                                     style={{...styles.statusDot, ...(isOnline(friend.status) ? styles.online : styles.offline),}}></span>
-                                <span data-testid="friend-username">{friend.username || friend.email.split('@')[0]}</span>
+                                <span data-testid="friend-username">{friend.displayName}</span>
                                 <span data-testid="friend-status">({formatLastSeen(friend.lastSeen, friend.status)})</span>
                                 <button
                                     data-testid={`remove-friend-btn-${friend.email}`}

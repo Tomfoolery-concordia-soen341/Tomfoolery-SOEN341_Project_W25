@@ -6,6 +6,7 @@ import {
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
+    updateProfile
 } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,7 @@ const ProfilePage = () => {
 
   //change username
   const [formData, setFormData] = useState({
-    username: "",
+    displayName: "",
     currentPassword: "",
   });
 
@@ -46,7 +47,7 @@ const ProfilePage = () => {
       if (userDoc.exists()) {
         setFormData((prev) => ({
           ...prev,
-          username: userDoc.data().username || "",
+          displayName: userDoc.data().displayName || "",
           newEmail: user.email || "",
         }));
       }
@@ -56,31 +57,43 @@ const ProfilePage = () => {
   //when
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if ((name === "newEmail" || name === "currentPassword") && e.target.form.id === "emailForm") {
+      setEmailForm(prev => ({ ...prev, [name]: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleUpdateUsername = async (e) => {
-    //remove default
     e.preventDefault();
     try {
-      //make sure that the user can confirm
+      // authenticate user
       const credential = EmailAuthProvider.credential(
-        user.email,
-        formData.currentPassword
+          user.email,
+          formData.currentPassword
       );
-      //if not authenticated, then you can't change usernames
       await reauthenticateWithCredential(user, credential);
-      //after authenticated, change the username
-      await updateDoc(doc(db, "users", user.uid), {
-        username: formData.username.trim(),
+
+      // update the displayname
+      await updateProfile(user, {
+        displayName: formData.displayName.trim()
       });
-      //print
-      setSuccess("Username updated successfully!");
-      //no error
+
+      // update in the firestore
+      await updateDoc(doc(db, "users", user.uid), {
+        displayName: formData.displayName.trim()
+      });
+
+      // show the update
+      setSuccess(`Display name updated successfully to ${formData.displayName.trim()}!`);
       setError("");
+
+      // clear password field
+      setFormData(prev => ({ ...prev, currentPassword: "" }));
+      setFormData(prev => ({ ...prev, displayName: "" }));
+
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      //on error based on which operation went wrong
       setError(err.message);
       setTimeout(() => setError(""), 3000);
     }
@@ -154,8 +167,8 @@ const ProfilePage = () => {
       <form onSubmit={handleUpdateUsername} className="profile-section">
         <h2>Username</h2>
         <input
-          name="username"
-          value={formData.username}
+          name="displayName"
+          value={formData.displayName}
           onChange={handleChange}
           placeholder="Enter username"
           required
@@ -177,6 +190,7 @@ const ProfilePage = () => {
           type="email"
           name="newEmail"
           value={emailForm.newEmail}
+          placeholder="Enter email"
           onChange={handleChange}
           required
         />

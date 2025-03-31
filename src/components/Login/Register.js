@@ -22,7 +22,7 @@ const Register = () => {
       );
       const user = userCredential.user;
       await setDoc(doc(db, "users", user.uid), {
-        username: RegisterUsername,
+        displayName: RegisterUsername,
         email: RegisterEmail,
         role: role,
         lastSeen: serverTimestamp(),

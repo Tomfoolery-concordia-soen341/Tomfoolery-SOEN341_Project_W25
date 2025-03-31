@@ -75,7 +75,7 @@ const Channel = () => {
             setAdmin(true);
         }
 
-        const channelSnap = await getDoc(doc(db, "privateChannels", channel.id));
+        const channelSnap = await getDoc(doc(db, "channels", channel.id));
         if (channelSnap.exists()) {
             const channelData = channelSnap.data();
             console.log("Channel data:", channelData);
@@ -142,7 +142,7 @@ const Channel = () => {
             alert("Please select a member.");
             return;
         }
-        await updateDoc(doc(db, "privateChannels", channel.id), {
+        await updateDoc(doc(db, "channels", channel.id), {
             members: arrayUnion(selectedMember), // Add the selected member to Firestore
         });
 
@@ -154,7 +154,7 @@ const Channel = () => {
     //get messages for chat
     const GetMessages = () => {
         const sorter = query(
-            collection(db, "privateChannels", channel.id, "messages"),
+            collection(db, "channels", channel.id, "messages"),
             orderBy("timestamp")
         );
 
@@ -189,13 +189,12 @@ const Channel = () => {
         // Get the current user's data to include username
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.data();
-        const username = userData.username || userData.email; // Fallback to email if username doesn't exist
 
         //add the new message to the database
-        addDoc(collection(db, "privateChannels", channel.id, "messages"), {
+        addDoc(collection(db, "channels", channel.id, "messages"), {
             text: newMessage,
             sender: auth.currentUser.email,
-            senderUsername: username,
+            senderUsername: userData.displayName,
             timestamp: serverTimestamp(),
             quotedMessage: quotedMessage
                 ? {
@@ -230,7 +229,7 @@ const Channel = () => {
             if (!confirm) return;
         }
 
-        await updateDoc(doc(db, "privateChannels", channel.id), {
+        await updateDoc(doc(db, "channels", channel.id), {
             members: arrayRemove(user.email),
         }).then(() => {
             BackToDashboard();
@@ -259,7 +258,7 @@ const Channel = () => {
         try {
             //delete message from database
             await deleteDoc(
-                doc(db, `privateChannels/${channel.id}/messages`, message.id)
+                doc(db, `channel/${channel.id}/messages`, message.id)
             );
 
             //update the chat
@@ -277,7 +276,7 @@ const Channel = () => {
     //accept requests to join a channel
     const AcceptRequest = async (requester) => {
         //reference
-        const channelRef = doc(db, "privateChannels", channel.id);
+        const channelRef = doc(db, "channels", channel.id);
         //when accepted, will add the user to the channel
         await updateDoc(channelRef, {
             members: arrayUnion(requester),
@@ -292,7 +291,7 @@ const Channel = () => {
     //delete requests to a channel
     const DeleteRequest = async (requester) => {
         //update the document of requests, and remove the request
-        await updateDoc(doc(db, "privateChannels", channel.id), {
+        await updateDoc(doc(db, "channels", channel.id), {
             request: arrayRemove(requester),
         });
         //confirmation
@@ -420,7 +419,7 @@ const Channel = () => {
             {/* left is channel info */}
             <div className="channel-info-column">
                 <div className="channel-info">
-                    <h1>{channel.isDefault ? "Public " : "Private "}Channel: {channel.name}</h1>
+                    <h1>{channel.isDefault ? "Public " : "Private "}Channel:  <br/>{channel.name} </h1>
                     {(admin && !channel.isDefault) && <div className="owner-info">Owner: {ownerEmail}</div>}
                         <div style={{'font-size':'23px'}}> Be careful to not share and personal information such as your password! </div>
                     {!admin && !channel.isDefault && (
@@ -564,14 +563,14 @@ const Channel = () => {
                     <h2>Members</h2>
                     <ul className="scrollable-content members-list">
                         {membersWithStatus.map((member, index) => (
-                            <div key={index} className="user-card">
+                            <div key={index} className="member-card">
                 <span
                     className={`status-indicator ${
                         isOnline(member.status) ? "status-online" : "status-offline"
                     }`}
                 ></span>
                                 <div className="user-info">
-                                    <span className="username">{member.username}</span>
+                                    <span className="username">{member.displayName}</span>
                                     {/*<span className="user-role">{user.role}</span>*/}
                                 </div>
                                 <div className="user-status">
