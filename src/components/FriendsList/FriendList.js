@@ -63,6 +63,8 @@ const FriendList = () => {
     //friends
     const [friends, setFriends] = useState([]);
     const [selectedFriend, setSelectedFriend] = useState(null);
+    const [loading, setLoading] = useState(true);
+
     //update friend list when a user gets to the page
     useEffect(() => {
         updateLastSeen()
@@ -71,39 +73,44 @@ const FriendList = () => {
 
     //friend handling
     const fetchFriends = async () => {
-        if (!user) return;
-        const userSnapshot = await getDocs(
-            query(collection(db, "users"), where("email", "==", user.email))
-        );
-        if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
-            const friendEmails = userData.friends || [];
+        setLoading(true);
+        try{
+            if (!user) return;
+            const userSnapshot = await getDocs(
+                query(collection(db, "users"), where("email", "==", user.email))
+            );
+            if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data();
+                const friendEmails = userData.friends || [];
 
-            if (friendEmails.length > 0) {
-                const friendsQuery = query(collection(db, "users"), where("email", "in", friendEmails));
-                const friendsSnapshot = await getDocs(friendsQuery);
+                if (friendEmails.length > 0) {
+                    const friendsQuery = query(collection(db, "users"), where("email", "in", friendEmails));
+                    const friendsSnapshot = await getDocs(friendsQuery);
 
-                const friendsData = friendsSnapshot.docs.map((doc) => ({
-                    id: doc.id, // the random document ID
-                    ...doc.data(), // all user data including email, status, etc.
-                }));
+                    const friendsData = friendsSnapshot.docs.map((doc) => ({
+                        id: doc.id, // the random document ID
+                        ...doc.data(), // all user data including email, status, etc.
+                    }));
 
-                // Create a map for quick lookup by email
-                const membersMap = {};
-                friendsData.forEach((friend) => {
-                    membersMap[friend.email] = friend;
-                });
+                    // Create a map for quick lookup by email
+                    const membersMap = {};
+                    friendsData.forEach((friend) => {
+                        membersMap[friend.email] = friend;
+                    });
 
-                // Combine with original member list to maintain order
-                const allFriends = friendEmails.map((email) => ({
-                    email,
-                    ...(membersMap[email] || {status: "unknown"}), // fallback if user not found
-                }));
+                    // Combine with original member list to maintain order
+                    const allFriends = friendEmails.map((email) => ({
+                        email,
+                        ...(membersMap[email] || {status: "unknown"}), // fallback if user not found
+                    }));
 
-                setFriends(allFriends);
-            } else {
-                setFriends([]);
+                    setFriends(allFriends);
+                } else {
+                    setFriends([]);
+                }
             }
+        } finally {
+            setLoading(false);
         }
     };
     const addFriend = async (friend) => {
@@ -331,7 +338,7 @@ const FriendList = () => {
                 <button className="btn-friends" onClick={searchUsers}>Search</button>
                 <ul>
                     {searchResults.map((result) => (
-                        <li key={result.id}>
+                        <li key={result.id} data-testid={`search-result-${result.email}`}>
                             {result.email}{" "}
                             <button onClick={() => addFriend(result)}>Add</button>
                             <button onClick={closeSearch}>Return</button>
@@ -343,12 +350,25 @@ const FriendList = () => {
                 {/*Friends START*/}
                 <h2>Friends</h2>
                 <ul className={"friends-list"}>
-                    {friends.length > 0 ? (
+                    {loading ? (
+                        <p>Loading friends...</p>
+                    ) :friends.length > 0 ? (
                         friends.map((friend, index) => (
-                            <li key={index} onClick={() => selectFriend(friend.email)} data-testid={`friend-item-${friend.email}`} >
-                    <span style={{...styles.statusDot, ...(isOnline(friend.status) ? styles.online : styles.offline),}}></span>
-                                {friend.username}{" "}
-                                <span>({formatLastSeen(friend.lastSeen, friend.status)})</span>
+                            <li key={index} onClick={() => selectFriend(friend.email)}
+                                data-testid={`friend-item-${friend.email}`}>
+                                <span
+                                    style={{...styles.statusDot, ...(isOnline(friend.status) ? styles.online : styles.offline),}}></span>
+                                <span data-testid="friend-username">{friend.username || friend.email.split('@')[0]}</span>
+                                <span data-testid="friend-status">({formatLastSeen(friend.lastSeen, friend.status)})</span>
+                                <button
+                                    data-testid={`remove-friend-btn-${friend.email}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFriend(friend.email).then(r => null);
+                                    }}
+                                >
+                                    Remove
+                                </button>
                             </li>
                         ))
                     ) : (
@@ -402,9 +422,6 @@ const FriendList = () => {
                         <button onClick={sendMessage}>Send</button>
                         <p>
                             <button onClick={closeChat}>Close Chat</button>
-                            <button onClick={() => removeFriend(selectedFriend)}>
-                                Remove Friend
-                            </button>
                         </p>
                     </div>
                 )}
