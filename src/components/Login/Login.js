@@ -6,31 +6,26 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 import "./Style.css";
 
-//import Cookies from "universal-cookie";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  // const cookies = new Cookies();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Sign in with Firebase Authentication
       const result = await signInWithEmailAndPassword(auth, email, password);
-
-      // Update lastSeen timestamp in Firestore
       const userRef = doc(db, "users", result.user.uid);
       await updateDoc(userRef, {
-        lastSeen: serverTimestamp(), // Set lastSeen to current server time
-        status: "active", // Set status to online
+        lastSeen: serverTimestamp(),
+        status: "active",
       });
 
-      // Fetch user role from Firestore
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.role) {
-          navigate("/Dashboard"); // Redirect to admin dashboard
+          navigate("/Dashboard");
         } else {
           alert("Unauthorized role.");
         }
@@ -41,12 +36,15 @@ const Login = () => {
       alert(error.message);
     }
   };
+
   const GoToRegister = () => {
     navigate("/register");
   };
+
   const GoToOffLineFriendList = () => {
     navigate("/OffLineFriendList");
   };
+
   return (
     <div className="OuterContainer">
       <div className="FormContainer">
@@ -54,8 +52,11 @@ const Login = () => {
           <h1 className="Login">Login</h1>
           <form onSubmit={handleLogin} className="FormSubmit">
             <div>
-              <label className="Email">Email</label>
+              <label htmlFor="email" className="Email">
+                Email
+              </label>
               <input
+                id="email"
                 className="InputEmail"
                 type="email"
                 placeholder="Email"
@@ -65,8 +66,11 @@ const Login = () => {
               />
             </div>
             <div>
-              <label className="Password">Password</label>
+              <label htmlFor="password" className="Password">
+                Password
+              </label>
               <input
+                id="password"
                 className="InputPassword"
                 type="password"
                 placeholder="Password"
