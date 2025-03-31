@@ -24,4 +24,5 @@ yarn-error.log*
 
 # KEYs + migration.js files
 /migrations
+/migration
 /.idea
