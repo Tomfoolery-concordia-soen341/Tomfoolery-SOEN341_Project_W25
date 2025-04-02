@@ -145,6 +145,26 @@ const Dashboard = () => {
                 </a>
               </div>
             </div>
+
+            {/* Online Users Button in Navbar */}
+            <div className="navbar-item">
+              <button
+                className={`button is-link is-medium ${showOnlineUsers ? "is-rounded" : ""}`}
+                style={{
+                  borderRadius: showOnlineUsers ? "8px" : "50%", // Rounded corners when expanded, circle when collapsed
+                }}
+                onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+              >
+                <span className="icon">
+                  <i className="fas fa-users"></i> {/* Font Awesome Users Icon */}
+                </span>
+                {showOnlineUsers && (
+                  <span className="ml-2">
+                    Online Users ({allUsers.filter((u) => u.status === "active").length}) {/* Online user count */}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -161,7 +181,7 @@ const Dashboard = () => {
                 </div>
                 <div className="level-right">
                   <div className="buttons">
-                    <button className="button is-info" onClick={() => setShowNewChannelModal(true)}>
+                    <button className="button is-info is-medium" onClick={() => setShowNewChannelModal(true)}>
                       <span className="icon">
                         <i className="fas fa-plus"></i> {/* Font Awesome Plus Icon */}
                       </span>
@@ -169,7 +189,7 @@ const Dashboard = () => {
                     </button>
                     {!admin && (
                       <button
-                        className="button is-success is-outlined" // Changed to green (Bulma's `is-success`)
+                        className="button is-success is-outlined is-medium"
                         onClick={() => setShowJoinChannelModal(true)}
                       >
                         <span className="icon">
@@ -184,7 +204,12 @@ const Dashboard = () => {
 
               {/* Default Channels Section */}
               <div className="box">
-                <h3 className="subtitle is-5 has-text-link">Public Channels</h3>
+                <h3 className="subtitle is-5 has-text-link">
+                  <span className="icon mr-2">
+                    <i className="fas fa-globe"></i> {/* Font Awesome Globe Icon */}
+                  </span>
+                  Public Channels
+                </h3>
                 <div className="buttons is-info are-small">
                   {defaultChannels.map((channel) => (
                     <button
@@ -205,13 +230,16 @@ const Dashboard = () => {
               {/* Private Channels Section */}
               <div className="box">
                 <h3 className="subtitle is-5 has-text-link">
-                  <span>Private Channels</span>
+                  <span className="icon mr-2">
+                    <i className="fas fa-lock"></i> {/* Font Awesome Lock Icon */}
+                  </span>
+                  Private Channels
                 </h3>
                 <div className="buttons is-info are-small">
-                  {privateChannels.map(channel => (
+                  {privateChannels.map((channel) => (
                     <button
                       key={channel.id}
-                      className={`button ${activeChannel?.id === channel.id ? 'is-warning' : 'is-info'}`}
+                      className={`button ${activeChannel?.id === channel.id ? "is-warning" : "is-info"}`}
                       onClick={() => goToChannel(channel)}
                       onContextMenu={(e) => {
                         e.preventDefault();
@@ -229,35 +257,7 @@ const Dashboard = () => {
 
         {/* Online Users Sidebar */}
         <div className="column is-narrow">
-          {/* Online Users Button */}
-          <div
-            className="is-flex"
-            style={{
-              position: "fixed", // Fix the button to the viewport
-              right: "0", // Align it to the rightmost part of the screen
-              top: "4rem", // Stick it below the navbar
-              zIndex: "10", // Ensure it stays above other elements
-            }}
-          >
-            <button
-              className={`button is-link ${showOnlineUsers ? "is-rounded" : ""} mb-3`} // Rounded when expanded
-              style={{
-                width: showOnlineUsers ? "300px" : "50px", // Match the sidebar width when expanded, small circle when collapsed
-                height: "50px", // Keep height consistent
-                borderRadius: showOnlineUsers ? "8px" : "50%", // Rounded corners when expanded, circle when collapsed
-              }}
-              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
-            >
-              <span className="icon">
-                <i className="fas fa-users"></i> {/* Font Awesome Users Icon */}
-              </span>
-              {showOnlineUsers && (
-                <span className="ml-2">
-                  Online Users ({allUsers.filter((u) => u.status === "active").length}) {/* Online user count */}
-                </span>
-              )}
-            </button>
-          </div>
+
 
           {/* Online Users Dropdown */}
           {showOnlineUsers && (
