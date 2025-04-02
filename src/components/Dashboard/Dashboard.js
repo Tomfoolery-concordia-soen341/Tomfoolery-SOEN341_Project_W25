@@ -6,7 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import NewChannelPrompt from "./NewChannelPrompt";
-import PublicChannelsPrompt from "./PublicChannelsPrompt";
+import PublicChannelsPrompt from "./JoinPrivateChannel";
 
 const Dashboard = () => {
   const [user] = useAuthState(auth);
@@ -160,12 +160,25 @@ const Dashboard = () => {
                   <h2 className="title is-3 has-text-black">Your Channels</h2>
                 </div>
                 <div className="level-right">
-                  <button className="button is-info" onClick={() => setShowNewChannelModal(true)}>
-                    <span className="icon">
-                      <i className="fas fa-plus"></i> {/* Font Awesome Plus Icon */}
-                    </span>
-                    <span>New Channel</span>
-                  </button>
+                  <div className="buttons">
+                    <button className="button is-info" onClick={() => setShowNewChannelModal(true)}>
+                      <span className="icon">
+                        <i className="fas fa-plus"></i> {/* Font Awesome Plus Icon */}
+                      </span>
+                      <span>New Channel</span>
+                    </button>
+                    {!admin && (
+                      <button
+                        className="button is-success is-outlined" // Changed to green (Bulma's `is-success`)
+                        onClick={() => setShowJoinChannelModal(true)}
+                      >
+                        <span className="icon">
+                          <i className="fas fa-sign-in-alt"></i> {/* Font Awesome Join Icon */}
+                        </span>
+                        <span>Join Private Channel</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -210,15 +223,6 @@ const Dashboard = () => {
                   ))}
                 </div>
               </div>
-
-              {!admin && (
-                <button 
-                  className="button is-primary is-outlined"
-                  onClick={() => setShowJoinChannelModal(true)}
-                >
-                  <span>Join Public Channel</span>
-                </button>
-              )}
             </div>
           </section>
         </div>
@@ -302,33 +306,11 @@ const Dashboard = () => {
 
       {/* Modals */}
       {showNewChannelModal && (
-        <div className="modal is-active">
-          <div className="modal-background" onClick={() => setShowNewChannelModal(false)}></div>
-          <div className="modal-card">
-            <header className="modal-card-head">
-              <p className="modal-card-title">Create New Channel</p>
-              <button className="delete" onClick={() => setShowNewChannelModal(false)}></button>
-            </header>
-            <section className="modal-card-body">
-              <NewChannelPrompt onClose={() => setShowNewChannelModal(false)} />
-            </section>
-          </div>
-        </div>
+        <NewChannelPrompt onClose={() => setShowNewChannelModal(false)} />
       )}
 
       {showJoinChannelModal && (
-        <div className="modal is-active">
-          <div className="modal-background" onClick={() => setShowJoinChannelModal(false)}></div>
-          <div className="modal-card">
-            <header className="modal-card-head">
-              <p className="modal-card-title">Join Public Channel</p>
-              <button className="delete" onClick={() => setShowJoinChannelModal(false)}></button>
-            </header>
-            <section className="modal-card-body">
-              <PublicChannelsPrompt onClose={() => setShowJoinChannelModal(false)} />
-            </section>
-          </div>
-        </div>
+        <PublicChannelsPrompt onClose={() => setShowJoinChannelModal(false)} />
       )}
     </div>
   );

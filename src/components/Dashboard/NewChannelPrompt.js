@@ -99,7 +99,7 @@ export default function NewChannelPrompt({ onClose }) {
                       checked={def}
                       onChange={(e) => setDef(e.target.checked)}
                     />
-                    &nbsp; Default Channel
+                    &nbsp; Public Channel
                   </label>
                 </div>
               )}
