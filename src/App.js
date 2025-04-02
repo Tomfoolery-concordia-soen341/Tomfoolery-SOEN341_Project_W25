@@ -16,7 +16,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/friends" element={<FriendList />} />
-        <Route path="/privchannel/:id" element={<Channel />} />
+        <Route path="/channels/:id" element={<Channel />} />
         <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Profile" element={<ProfilePage />} />

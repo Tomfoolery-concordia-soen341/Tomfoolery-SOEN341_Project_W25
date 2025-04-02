@@ -76,7 +76,11 @@ const Dashboard = () => {
     };
   }, [user, admin]);
 
-  const goToChannel = (channel) => navigate(`/channel/${channel.id}`, { state: { channel } });
+  const goToChannel = (channel) => {
+    console.log(channel);
+    navigate(`/channels/${channel.id}`, { state: { channel } });
+  };
+
   const goToFriends = () => navigate("/friends");
   const goToProfile = () => navigate("/profile");
   const handleLogout = async () => {
@@ -215,11 +219,7 @@ const Dashboard = () => {
                     <button
                       key={channel.id}
                       className={`button ${activeChannel?.id === channel.id ? "is-warning" : "is-info"}`}
-                      onClick={() => goToChannel(channel)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setActiveChannel(channel);
-                      }}
+                      onClick={() => goToChannel(channel)} // Navigate to the channel
                     >
                       {channel.name}
                     </button>
@@ -240,11 +240,7 @@ const Dashboard = () => {
                     <button
                       key={channel.id}
                       className={`button ${activeChannel?.id === channel.id ? "is-warning" : "is-info"}`}
-                      onClick={() => goToChannel(channel)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setActiveChannel(channel);
-                      }}
+                      onClick={() => goToChannel(channel)} // Navigate to the channel
                     >
                       {channel.name}
                     </button>
@@ -266,12 +262,12 @@ const Dashboard = () => {
               style={{
                 position: "fixed", // Fix the dropdown to the viewport
                 right: "0", // Align it to the rightmost part of the screen
-                top: "7rem", // Position it below the button
+                top: "4rem", // Position it below the button
                 width: "100%", // Full width of the sidebar
                 maxWidth: "300px", // Optional: Limit the sidebar width
-                height: "calc(100vh - 7rem)", // Make it take the remaining height of the viewport
+                height: "calc(100vh - 2rem)", // Make it take the remaining height of the viewport
                 overflowY: "auto", // Enable scrolling for the friend list
-                zIndex: "9", // Ensure it stays below the button
+                //zIndex: "2", // Ensure it stays below the button
               }}
             >
               <div className="menu">

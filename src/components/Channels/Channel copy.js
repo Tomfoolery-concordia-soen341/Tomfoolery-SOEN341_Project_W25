@@ -424,61 +424,55 @@ const Channel = () => {
                   marginBottom: "0.5rem",
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    maxWidth: "60%", // Set a maximum width for the wrapper
-                    wordWrap: "break-word",
-                  }}
-                >
-                  {msg.quotedMessage && (
-                    <div
-                      style={{
-                        backgroundColor: "rgba(128, 128, 128, 0.2)", // Slightly transparent grey
-                        borderLeft: "4px solid #3273dc",
-                        padding: "0.5rem",
-                        fontSize: "0.9rem",
-                        color: "#555",
-                        borderRadius: "8px 8px 0 0", // Rounded corners only at the top
-                        wordWrap: "break-word",
-                      }}
-                    >
-                      <p style={{ margin: 0 }}>
-                        <strong>In reply to:</strong> {userDisplayNames[msg.quotedMessage.sender] || msg.quotedMessage.sender}: {msg.quotedMessage.text}
-                      </p>
-                    </div>
-                  )}
+                {msg.quotedMessage && (
                   <div
                     style={{
-                      backgroundColor: msg.sender === user.email ? "#3273dc" : "#f0f0f0", // Blue for sender, gray for receiver
-                      color: msg.sender === user.email ? "#fff" : "#000", // White text for sender, black for receiver
-                      padding: "0.75rem",
-                      borderRadius: msg.quotedMessage ? "0 0 12px 12px" : "12px", // Rounded corners only at the bottom if quoted
-                      wordWrap: "break-word",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                      backgroundColor: "#f0f0f0",
+                      borderLeft: "4px solid #3273dc",
+                      padding: "0.5rem",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      color: "#555",
+                      borderRadius: "8px",
+                      maxWidth: "60%",
                     }}
                   >
                     <p style={{ margin: 0 }}>
-                      <strong>{userDisplayNames[msg.sender] || msg.sender}:</strong> {msg.text}
+                      <strong>In reply to:</strong> {userDisplayNames[msg.quotedMessage.sender] || msg.quotedMessage.sender}: {msg.quotedMessage.text}
                     </p>
-                    <span
-                      style={{
-                        fontSize: "0.8rem",
-                        color: msg.sender === user.email ? "#d0d0d0" : "#888",
-                        display: "block",
-                        marginTop: "0.5rem",
-                        textAlign: msg.sender === user.email ? "right" : "left", // Align timestamp based on sender
-                      }}
-                    >
-                      {msg.timestamp
-                        ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Just now"}
-                    </span>
                   </div>
+                )}
+                <div
+                  style={{
+                    backgroundColor: msg.sender === user.email ? "#3273dc" : "#f0f0f0", // Blue for sender, gray for receiver
+                    color: msg.sender === user.email ? "#fff" : "#000", // White text for sender, black for receiver
+                    padding: "0.75rem",
+                    borderRadius: "12px",
+                    maxWidth: "60%",
+                    wordWrap: "break-word",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                    position: "relative", // Ensure the timestamp aligns properly
+                  }}
+                >
+                  <p style={{ margin: 0 }}>
+                    <strong>{userDisplayNames[msg.sender] || msg.sender}:</strong> {msg.text}
+                  </p>
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      color: msg.sender === user.email ? "#d0d0d0" : "#888",
+                      display: "block",
+                      marginTop: "0.5rem",
+                      textAlign: msg.sender === user.email ? "right" : "left", // Align timestamp based on sender
+                    }}
+                  >
+                    {msg.timestamp
+                      ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Just now"}
+                  </span>
                 </div>
               </li>
             ))}
