@@ -7,6 +7,8 @@ import Channel from "./components/Channels/Channel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
 import Dashboard from "./components/Dashboard/Dashboard"
 import ProfilePage from "./components/Profile/ProfilePage";
+import "bulma/css/bulma.min.css";
+import '@fortawesome/fontawesome-free/css/all.min.css';
 function App() {
   return (
     <Router>
