@@ -266,7 +266,7 @@ const Dashboard = () => {
                 width: "100%", // Full width of the sidebar
                 maxWidth: "300px", // Optional: Limit the sidebar width
                 height: "calc(100vh - 2rem)", // Make it take the remaining height of the viewport
-                overflowY: "auto", // Enable scrolling for the friend list
+                overflowY: "auto", // Enable scrolling for the user list
                 //zIndex: "2", // Ensure it stays below the button
               }}
             >

@@ -19,21 +19,26 @@ const Register = () => {
         auth,
         RegisterEmail,
         RegisterPassword
-        // role
       );
       const user = userCredential.user;
+
+      // Add user to Firestore
       await setDoc(doc(db, "users", user.uid), {
         username: RegisterUsername,
         email: RegisterEmail,
         role: role,
         lastSeen: serverTimestamp(),
         status: "active",
+        friends: [], // Initialize friends list
+        friendRequests: [], // Initialize friend requests list
       });
-      navigate("/"); // Redirect to dashboard after login
+
+      navigate("/"); // Redirect to dashboard after registration
     } catch (error) {
       alert(error.message);
     }
   };
+
   const Back = () => {
     navigate("/");
   };
@@ -45,46 +50,45 @@ const Register = () => {
           <h1 className="Register">Register</h1>
           <form onSubmit={Register} className="FormRegister">
             <div>
-              <label className="Email">Email</label>
+              <label className="Username">Username</label>
               <input
-                  className="InputUsername"
-                  type="Username"
-                  placeholder="Username"
-                  value={RegisterEmail}
-                  onChange={(e) => setRegisterUsername(e.target.value)}
-                  required
+                className="InputUsername"
+                type="text"
+                placeholder="Username"
+                value={RegisterUsername}
+                onChange={(e) => setRegisterUsername(e.target.value)} // Fixed handler
+                required
               />
             </div>
             <div>
               <label className="Email">Email</label>
               <input
-                  className="InputEmail"
-                  type="email"
-                  placeholder="Email"
-                  value={RegisterEmail}
-                  onChange={(e) => setRegisterEmail(e.target.value)}
-                  required
+                className="InputEmail"
+                type="email"
+                placeholder="Email"
+                value={RegisterEmail}
+                onChange={(e) => setRegisterEmail(e.target.value)}
+                required
               />
             </div>
             <div>
               <label className="Password">Password</label>
               <input
-                  className="InputPassword"
-                  type="password"
-                  placeholder="Password"
-                  value={RegisterPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                  required
+                className="InputPassword"
+                type="password"
+                placeholder="Password"
+                value={RegisterPassword}
+                onChange={(e) => setRegisterPassword(e.target.value)}
+                required
               />
             </div>
             <div>
               <label className="Role">Role</label>
               <select
-                  className="RoleSelect"
-                  // w-full p-2 border border-gray-300 rounded-lg
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
+                className="RoleSelect"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
               >
                 <option value="">Select a role</option>
                 <option value="admin">Admin</option>
@@ -96,11 +100,12 @@ const Register = () => {
             </button>
           </form>
           <h1 onClick={Back} className="GoToLogin">
-            Go back to log in{" "}
+            Go back to log in
           </h1>
         </div>
       </div>
     </div>
   );
 };
+
 export default Register;

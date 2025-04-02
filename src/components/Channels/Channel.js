@@ -357,9 +357,8 @@ const Channel = () => {
             )}
             {channel.name}
           </h1>
-          {admin && <p className="subtitle is-6">Owner: {ownerEmail}</p>}
           <p className="subtitle is-6 mt-3">
-            <strong>Channel Owner:</strong> {ownerEmail}
+            <strong>Channel Owner:</strong> {channel.isDefault ? "Public" : ownerEmail}
           </p>
           <hr style={{ borderColor: "black", border: "inset" }} /> {/* Horizontal line styled as black */}
           {(owner || admin) && requests.length > 0 && (
