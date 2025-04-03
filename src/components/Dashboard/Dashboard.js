@@ -63,7 +63,8 @@ const Dashboard = () => {
           displayName: doc.data().displayName,
           status: doc.data().status || "inactive",
           lastSeen: doc.data().lastSeen || null,
-        }));
+        }))
+        .sort((a, b) => (a.status === "active" && b.status !== "active" ? -1 : 1)); // Sort online users first
       setAllUsers(usersData);
     });
 
@@ -99,7 +100,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-layout">
+    <div
+      className="dashboard-layout has-background-light"
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }} // Ensure full height and column layout
+    >
       {/* Top Navigation Bar */}
       <nav className="navbar is-link is-fixed-top">
         <div className="navbar-brand">
@@ -174,7 +178,10 @@ const Dashboard = () => {
       </nav>
 
       {/* Main Content Area */}
-      <div className={`columns is-gapless mt-6 ${showOnlineUsers ? "has-sidebar" : ""}`}>
+      <div
+        className={`columns is-gapless mt-6 ${showOnlineUsers ? "has-sidebar" : ""}`}
+        style={{ flex: 1 }} // Make the main content area take up remaining space
+      >
         {/* Channels Column */}
         <div className={`column ${showOnlineUsers ? "is-three-quarters" : "is-fullwidth"}`}>
           <section className="section">

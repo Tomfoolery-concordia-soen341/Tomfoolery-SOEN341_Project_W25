@@ -4,33 +4,27 @@ import { auth, db } from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
-import "./Style.css";
-
-//import Cookies from "universal-cookie";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  // const cookies = new Cookies();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Sign in with Firebase Authentication
       const result = await signInWithEmailAndPassword(auth, email, password);
 
-      // Update lastSeen timestamp in Firestore
       const userRef = doc(db, "users", result.user.uid);
       await updateDoc(userRef, {
-        lastSeen: serverTimestamp(), // Set lastSeen to current server time
-        status: "active", // Set status to online
+        lastSeen: serverTimestamp(),
+        status: "active",
       });
 
-      // Fetch user role from Firestore
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.role) {
-          navigate("/Dashboard"); // Redirect to admin dashboard
+          navigate("/Dashboard");
         } else {
           alert("Unauthorized role.");
         }
@@ -41,55 +35,124 @@ const Login = () => {
       alert(error.message);
     }
   };
+
   const GoToRegister = () => {
     navigate("/register");
   };
+
   const GoToOffLineFriendList = () => {
     navigate("/OffLineFriendList");
   };
+
   return (
-    <div className="OuterContainer">
-      <div className="FormContainer">
-        <div>
-          <h1 className="Login">Login</h1>
-          <form onSubmit={handleLogin} className="FormSubmit">
-            <div>
-              <label className="Email">Email</label>
-              <input
-                className="InputEmail"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="Password">Password</label>
-              <input
-                className="InputPassword"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="LoginButton">
-              Login
-            </button>
-          </form>
-          <h1 onClick={GoToRegister} className="GoToRegister">
-            Create an account ?
-            <span className="material-symbols-outlined">arrow_forward</span>
-            <h1 className="RegisterHere">Register here</h1>
-          </h1>
-          <h1 onClick={GoToOffLineFriendList} className="GoToRegister">
-            Send Messages Offline ?
-            <span className="material-symbols-outlined">arrow_forward</span>
-            <h1 className="RegisterHere">Click here</h1>
-          </h1>
-        </div>
+    <div
+      style={{
+        backgroundColor: "#f5faff",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          padding: "2rem",
+          borderRadius: "8px",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          width: "400px",
+        }}
+      >
+        <h1
+          style={{
+            color: "#3273dc",
+            fontSize: "2rem",
+            marginBottom: "1.5rem",
+            textAlign: "center",
+          }}
+        >
+          Login
+        </h1>
+        <form onSubmit={handleLogin}>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                border: "1px solid #3273dc",
+                borderRadius: "4px",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                border: "1px solid #3273dc",
+                borderRadius: "4px",
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "0.75rem",
+              backgroundColor: "#3273dc",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Login
+          </button>
+        </form>
+        <h1
+          onClick={GoToRegister}
+          style={{
+            color: "#3273dc",
+            textAlign: "center",
+            marginTop: "1rem",
+            cursor: "pointer",
+          }}
+        >
+          Create an account?{" "}
+          <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
+            Register here
+          </span>
+        </h1>
+        <h1
+          onClick={GoToOffLineFriendList}
+          style={{
+            color: "#3273dc",
+            textAlign: "center",
+            marginTop: "1rem",
+            cursor: "pointer",
+          }}
+        >
+          Send Messages Offline?{" "}
+          <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
+            Click here
+          </span>
+        </h1>
       </div>
     </div>
   );
