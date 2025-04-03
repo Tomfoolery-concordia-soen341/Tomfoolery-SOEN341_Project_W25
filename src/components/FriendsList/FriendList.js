@@ -296,23 +296,34 @@ const FriendList = () => {
             <ul>
               {friendRequests.length > 0 ? (
                 friendRequests.map((request) => (
-                  <li key={request}>
+                  <li
+                    key={request}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "4px",
+                    }}
+                  >
                     <span>
                       <i className="fa-solid fa-user-clock" style={{ marginRight: "8px" }}></i>
                       {request}
-                    </span>{" "}
-                    <button
-                      className="button is-small is-success"
-                      onClick={() => acceptFriendRequest(request)}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      className="button is-small is-danger"
-                      onClick={() => declineFriendRequest(request)}
-                    >
-                      Decline
-                    </button>
+                    </span>
+                    <div>
+                      <button
+                        className="button is-small is-success"
+                        onClick={() => acceptFriendRequest(request)}
+                        style={{ marginRight: "5px" }}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="button is-small is-danger"
+                        onClick={() => declineFriendRequest(request)}
+                      >
+                        Decline
+                      </button>
+                    </div>
                   </li>
                 ))
               ) : (
