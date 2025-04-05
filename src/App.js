@@ -7,6 +7,7 @@ import Channel from "./components/Channels/Channel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
 import Dashboard from "./components/Dashboard/Dashboard"
 import ProfilePage from "./components/Profile/ProfilePage";
+import TicTacToe from "./components/Game/TicTacToe";
 function App() {
   return (
     <Router>
@@ -18,6 +19,7 @@ function App() {
         <Route path="/OfflineFriendList" element={<OfflineFriendList />} />
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Profile" element={<ProfilePage />} />
+        <Route path="/TicTacToe" element={<TicTacToe />} />
       </Routes>
     </Router>
   );
