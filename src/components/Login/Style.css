@@ -7,7 +7,7 @@
       
   }
   .FormContainer {
-    width: 100%; /* Full width */
+    width: 100%; /* Full width *\
     max-width: 28rem; /* Maximum width (md size in Tailwind) */
     padding: 1.5rem; /* Padding (equivalent to p-6 in Tailwind) */
     background-color: rgb(218, 210, 207); /* White background for the form container */
