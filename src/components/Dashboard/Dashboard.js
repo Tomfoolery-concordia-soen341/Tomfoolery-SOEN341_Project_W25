@@ -26,6 +26,7 @@ import "./Dashboard.css"
 import ContextMenu from "../ContextMenu/ContextMenu";
 import "../ContextMenu/ContextMenu.css";
 import "./Dashboard.css";
+import {ConnectFour} from "../ConnectFour";
 
 const Dashboard = () => {
     const [user] = useAuthState(auth);
@@ -306,6 +307,9 @@ const Dashboard = () => {
                 </section>
                 <button className="btn btn-primary" style={{background: '#3498db'}} onClick={GoToProfile}>
                     Profile
+                </button>
+                <button className="btn btn-primary" style={{background: '#3498db'}} onClick={() => navigate("/TestGame")}>
+                    Game
                 </button>
                 <button className="btn btn-primary" style={{background: '#e74c3c'}} onClick={Logout}>
                     Logout
