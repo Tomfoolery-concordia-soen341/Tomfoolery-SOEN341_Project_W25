@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../../config/firebase";
-import {deleteDoc, doc, onSnapshot, updateDoc} from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import "./TicTacToe.css"
+
 const TicTacToe = () => {
   const { roomId } = useParams();
   const [user] = useAuthState(auth);
@@ -14,53 +14,23 @@ const TicTacToe = () => {
   const navigate = useNavigate();
 
   // Listen to game updates
-
   useEffect(() => {
-    if (!roomId || !user) return;
+    if (!roomId) return;
 
     const unsubscribe = onSnapshot(doc(db, "gameRooms", roomId), (doc) => {
-      setLoading(false); // Set loading to false when we get data
-
-      if (!doc.exists()) {
+      if (doc.exists()) {
+        const gameData = doc.data();
+        setGame(gameData);
+        checkWinner(gameData.board);
+        setLoading(false);
+      } else {
+        // Room doesn't exist
         navigate("/game-lobby");
-        return;
       }
-
-      const gameData = doc.data();
-      setGame(gameData);
-
-      // If game was deleted
-      if (gameData.status === "deleted") {
-        navigate("/game-lobby");
-        return;
-      }
-
-      // If player was removed
-      if (!gameData.players.includes(user.email)) {
-        navigate("/game-lobby");
-        return;
-      }
-
-      checkWinner(gameData.board);
     });
 
-    // Clean up on unmount
-    const handleBeforeUnload = () => {
-      if (game && game.players.includes(user.email)) {
-        updateDoc(doc(db, "gameRooms", roomId), {
-          players: game.players.filter(p => p !== user.email),
-          status: game.players.length === 2 ? "waiting" : "deleted",
-        });
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [roomId, user?.email]);
+    return () => unsubscribe();
+  }, [roomId, navigate]);
 
   const checkWinner = (board) => {
     const winPatterns = [
@@ -88,6 +58,7 @@ const TicTacToe = () => {
   const handleCellClick = async (index) => {
     if (
         !game ||
+        loading ||
         winner ||
         isDraw ||
         game.board[index] !== null ||
@@ -110,31 +81,21 @@ const TicTacToe = () => {
     }
   };
 
-  const leaveGame = async () => {
-    if (!game) {
-      navigate("/game-lobby");
-      return;
-    }
+  const renderCell = (index) => {
+    let cellContent = "";
+    if (game?.board[index] === "X") cellContent = "X";
+    if (game?.board[index] === "O") cellContent = "O";
 
-    try {
-      if (game.players.length === 1) {
-        // Last player leaving - delete room
-        await deleteDoc(doc(db, "gameRooms", roomId));
-      } else {
-        // Remove player and update status
-        await updateDoc(doc(db, "gameRooms", roomId), {
-          players: game.players.filter(p => p !== user.email),
-          status: "waiting",
-          board: Array(9).fill(null),
-          currentPlayer: "X",
-        });
-      }
-      navigate("/game-lobby");
-    } catch (error) {
-      console.error("Error leaving game:", error);
-    }
+    return (
+        <div
+            key={index}
+            className={`cell ${game?.board[index] ? `cell-${game.board[index].toLowerCase()}` : ""}`}
+            onClick={() => handleCellClick(index)}
+        >
+          {cellContent}
+        </div>
+    );
   };
-
 
   const resetGame = async () => {
     try {
@@ -148,6 +109,10 @@ const TicTacToe = () => {
     } catch (error) {
       console.error("Error resetting game:", error);
     }
+  };
+
+  const leaveGame = () => {
+    navigate("/game-lobby");
   };
 
   if (loading) {
@@ -187,48 +152,36 @@ const TicTacToe = () => {
                         className={`tag is-rounded ${player === user.email ? "is-primary" : "is-info"}`}
                     >
                   {player} ({index === 0 ? "X" : "O"})
-                      {game.players.length === 2 &&
-                          game.currentPlayer === (index === 0 ? "X" : "O") &&
-                          " (Your turn)"}
+                      {game.currentPlayer === (index === 0 ? "X" : "O") && " (Your turn)"}
                 </span>
                 ))}
               </div>
             </div>
 
-            {game.players.length < 2 ? (
+            {game.players.length < 2 && (
                 <div className="notification is-warning">
                   Waiting for another player to join...
                 </div>
-            ) : (
-                <>
-                  {winner && (
-                      <div className="notification is-success">
-                        Player {winner} wins! 🎉
-                      </div>
-                  )}
-
-                  {isDraw && (
-                      <div className="notification is-warning">
-                        It's a draw! 🤝
-                      </div>
-                  )}
-
-                  <div className="game-board">
-                    {Array(9).fill().map((_, index) => (
-                        <div
-                            key={index}
-                            className={`cell ${game.board[index] ? `cell-${game.board[index].toLowerCase()}` : ""}`}
-                            onClick={() => handleCellClick(index)}
-                        >
-                          {game.board[index]}
-                        </div>
-                    ))}
-                  </div>
-                </>
             )}
 
+            {winner && (
+                <div className="notification is-success">
+                  Player {winner} wins! 🎉
+                </div>
+            )}
+
+            {isDraw && (
+                <div className="notification is-warning">
+                  It's a draw! 🤝
+                </div>
+            )}
+
+            <div className="game-board">
+              {Array(9).fill().map((_, index) => renderCell(index))}
+            </div>
+
             <div className="buttons mt-4">
-              {(winner || isDraw) && game.players.length === 2 && (
+              {(winner || isDraw) && (
                   <button className="button is-primary" onClick={resetGame}>
                     Play Again
                   </button>
@@ -236,14 +189,6 @@ const TicTacToe = () => {
               <button className="button is-danger" onClick={leaveGame}>
                 Leave Game
               </button>
-              {game.host === user.email && game.players.length < 2 && (
-                  <button
-                      className="button is-warning"
-                      onClick={() => deleteDoc(doc(db, "gameRooms", roomId))}
-                  >
-                    Close Room
-                  </button>
-              )}
             </div>
           </div>
         </div>
