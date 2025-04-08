@@ -287,15 +287,9 @@ const GameLobby = () => {
                                     </button>
                                     <button className="button is-primary is-medium" disabled>
                     <span className="icon">
-                      <i className="fas fa-chess"></i>
+                      <i className="fas fa-coins"></i>
                     </span>
-                                        <span>Chess (Coming Soon)</span>
-                                    </button>
-                                    <button className="button is-primary is-medium" disabled>
-                    <span className="icon">
-                      <i className="fas fa-dice"></i>
-                    </span>
-                                        <span>Poker (Coming Soon)</span>
+                                        <span>Connect-4 (Coming Soon)</span>
                                     </button>
                                 </div>
                             </div>
