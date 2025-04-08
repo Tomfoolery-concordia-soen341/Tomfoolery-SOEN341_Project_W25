@@ -71,7 +71,13 @@ const Register = () => {
         </h1>
         <form onSubmit={Register}>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+            <label
+              style={{
+                color: "#3273dc",
+                display: "block",
+                marginBottom: "0.5rem",
+              }}
+            >
               Username
             </label>
             <input
@@ -89,7 +95,13 @@ const Register = () => {
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+            <label
+              style={{
+                color: "#3273dc",
+                display: "block",
+                marginBottom: "0.5rem",
+              }}
+            >
               Email
             </label>
             <input
@@ -107,7 +119,13 @@ const Register = () => {
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+            <label
+              style={{
+                color: "#3273dc",
+                display: "block",
+                marginBottom: "0.5rem",
+              }}
+            >
               Password
             </label>
             <input
@@ -125,7 +143,13 @@ const Register = () => {
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "#3273dc", display: "block", marginBottom: "0.5rem" }}>
+            <label
+              style={{
+                color: "#3273dc",
+                display: "block",
+                marginBottom: "0.5rem",
+              }}
+            >
               Role
             </label>
             <select
@@ -171,6 +195,8 @@ const Register = () => {
           Go back to log in
         </h1>
       </div>
+      
+    </div>
   );
 };
 

@@ -6,11 +6,12 @@ import Register from "./components/Login/Register";
 import Channel from "./components/Channels/Channel";
 import OfflineFriendList from "./components/Offline/OfflineFriendList";
 import FriendList from "./components/FriendsList/FriendList.js";
-import Dashboard from "./components/Dashboard/Dashboard"
+import Dashboard from "./components/Dashboard/Dashboard";
 import ProfilePage from "./components/Profile/ProfilePage";
 import TicTacToe from "./components/Game/TicTacToe";
+
 import "bulma/css/bulma.min.css";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 function App() {
   return (
     <Router>
