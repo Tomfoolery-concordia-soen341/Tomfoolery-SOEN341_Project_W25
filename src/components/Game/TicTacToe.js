@@ -69,17 +69,26 @@ const TicTacToe = () => {
         const names = await fetchDisplayNames(gameData.players);
         setDisplayNames(names);
       }
+
+      // Clear messages if waiting for another player
+      if (gameData.players.length < 2) {
+        setMessages([]);
+      }
     });
 
-    const messagesRef = collection(db, "gameRooms", roomId, "messages");
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
-    const unsubscribeMessages = onSnapshot(q, async (snapshot) => {
-      const messageList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMessages(messageList);
-    });
+    let unsubscribeMessages = null;
+    // Only set up the messages listener if there are two players
+    if (game?.players?.length === 2) {
+      const messagesRef = collection(db, "gameRooms", roomId, "messages");
+      const q = query(messagesRef, orderBy("timestamp", "asc"));
+      unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        const messageList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(messageList);
+      });
+    }
 
     const handleBeforeUnload = () => {
       if (game && game.players.includes(user.email)) {
@@ -94,10 +103,10 @@ const TicTacToe = () => {
 
     return () => {
       unsubscribeGame();
-      unsubscribeMessages();
+      if (unsubscribeMessages) unsubscribeMessages();
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [roomId, user?.email]);
+  }, [roomId, user?.email, game?.players?.length]);
 
   useEffect(() => {
     if (!game || !game.board) return;
@@ -258,32 +267,34 @@ const TicTacToe = () => {
               </>
             )}
           </div>
-          <div className="chat-section">
-            <h3>Chat</h3>
-            <div className="chat-messages">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`message ${msg.senderEmail === user.email ? "sent" : "received"}`}
-                >
-                  {msg.text}
-                </div>
-              ))}
-              <div ref={chatEndRef} />
+          {game.players.length === 2 && (
+            <div className="chat-section">
+              <h3>Chat</h3>
+              <div className="chat-messages">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`message ${msg.senderEmail === user.email ? "sent" : "received"}`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <form onSubmit={sendMessage} className="chat-input">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  disabled={game.players.length < 2}
+                />
+                <button type="submit" disabled={!newMessage.trim() || game.players.length < 2}>
+                  Send
+                </button>
+              </form>
             </div>
-            <form onSubmit={sendMessage} className="chat-input">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                disabled={game.players.length < 2}
-              />
-              <button type="submit" disabled={!newMessage.trim() || game.players.length < 2}>
-                Send
-              </button>
-            </form>
-          </div>
+          )}
         </div>
       </div>
     </div>

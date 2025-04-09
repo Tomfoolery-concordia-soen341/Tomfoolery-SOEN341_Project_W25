@@ -151,6 +151,12 @@ const GameLobby = () => {
     navigate(`/tic-tac-toe/${room.id}`);
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      createTicTacToeGame();
+    }
+  };
+
   return (
     <div
       className="dashboard-layout has-background-light"
@@ -459,6 +465,7 @@ const GameLobby = () => {
                     placeholder="Enter game room name"
                     value={newGameName}
                     onChange={(e) => setNewGameName(e.target.value)}
+                    onKeyPress={handleKeyPress}
                   />
                 </div>
               </div>
