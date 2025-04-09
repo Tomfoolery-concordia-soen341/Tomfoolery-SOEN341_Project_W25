@@ -24,6 +24,8 @@ const GameLobby = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
   const [gameRooms, setGameRooms] = useState([]);
+  const [connectFourRooms, setConnectFourRooms] = useState([]);
+  const [showCreatConnectFourModal, setShowCreatConnectFourModal] = useState(false);
   const [showCreateGameModal, setShowCreateGameModal] = useState(false);
   const [newGameName, setNewGameName] = useState("");
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -87,6 +89,22 @@ const GameLobby = () => {
     return () => fetchGameRooms();
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchConnectFourRooms = onSnapshot(
+        query(collection(db, "gameRooms"), where("gameType", "==", "connectFour")),
+        (snapshot) => {
+          setConnectFourRooms(
+              snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+          );
+        }
+    );
+    console.log(connectFourRooms);
+
+    return () => fetchConnectFourRooms();
+  }, []);
+
   const goToDashboard = () => navigate("/dashboard");
   const goToFriends = () => navigate("/friends");
   const goToProfile = () => navigate("/profile");
@@ -114,6 +132,30 @@ const GameLobby = () => {
         board: Array(9).fill(null),
         currentPlayer: "X",
         host: user.email,
+      };
+
+      await addDoc(collection(db, "gameRooms"), newRoom);
+      setShowCreateGameModal(false);
+      setNewGameName("");
+    } catch (error) {
+      console.error("Error creating game room:", error);
+    }
+  };
+
+  const createConnectFourGame = async () => {
+    if (!newGameName.trim()) return;
+
+    try {
+      const newRoom = {
+        gameType: "connectFour",
+        name: newGameName,
+        createdBy: user.email,
+        players: [user.email],
+        status: "waiting",
+        createdAt: serverTimestamp(),
+        host: user.email,
+        isStarted: false,
+        isFinished: false,
       };
 
       await addDoc(collection(db, "gameRooms"), newRoom);
@@ -291,7 +333,9 @@ const GameLobby = () => {
                     </span>
                     <span>Tic Tac Toe</span>
                   </button>
-                  <button className="button is-primary is-medium" disabled>
+                  <button
+                      className="button is-primary is-medium"
+                      onClick={() => setShowCreatConnectFourModal(true)}>
                     <span className="icon">
                       <i className="fas fa-coins"></i>
                     </span>
@@ -385,7 +429,94 @@ const GameLobby = () => {
                   </div>
                 )}
               </div>
+              <div className="box">
+                <h3 className="subtitle is-5 has-text-link">
+                  <span className="icon mr-2">
+                    <i className="fas fa-door-open"></i>
+                  </span>
+                  Active Connect-4 Rooms
+                </h3>
+
+                {gameRooms.length > 0 ? (
+                    <div className="table-container">
+                      <table className="table is-fullwidth is-striped">
+                        <thead>
+                        <tr>
+                          <th>Room Name</th>
+                          <th>Created By</th>
+                          <th>Players</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {connectFourRooms.map((room) => (
+                            <tr key={room.id}>
+                              <td>{room.name}</td>
+                              <td>{room.createdBy}</td>
+                              <td>
+                                <div className="tags">
+                                  {room.players.map((player, index) => (
+                                      <span key={index} className="tag is-primary">
+                                    {player}
+                                  </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td>
+                              <span
+                                  className={`tag ${
+                                      room.status === "waiting"
+                                          ? "is-warning"
+                                          : "is-success"
+                                  }`}
+                              >
+                                {room.status}
+                              </span>
+                              </td>
+                              <td>
+                                {room.players.includes(user.email) ? (
+                                    <button
+                                        className="button is-small is-info"
+                                        onClick={() =>
+                                            navigate(`/tic-tac-toe/${room.id}`)
+                                        }
+                                    >
+                                      Rejoin
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="button is-small is-info"
+                                        onClick={() => joinGameRoom(room)}
+                                        disabled={room.players.length >= 2}
+                                    >
+                                      Join
+                                    </button>
+                                )}
+                                {room.host === user.email && (
+                                    <button
+                                        className="button is-small is-danger ml-2"
+                                        onClick={() => deleteGameRoom(room.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                )}
+                              </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </div>
+                ) : (
+                    <div className="content">
+                      <p>
+                        No active Connect-4 rooms. Create one to get started!
+                      </p>
+                    </div>
+                )}
+              </div>
             </div>
+
           </section>
         </div>
 
@@ -486,6 +617,52 @@ const GameLobby = () => {
             </footer>
           </div>
         </div>
+      )}
+      {showCreatConnectFourModal && (
+          <div className="modal is-active">
+            <div
+                className="modal-background"
+                onClick={() => setShowCreatConnectFourModal(false)}
+            ></div>
+            <div className="modal-card">
+              <header className="modal-card-head">
+                <p className="modal-card-title">Create Connect-4 Game</p>
+                <button
+                    className="delete"
+                    aria-label="close"
+                    onClick={() => setShowCreatConnectFourModal(false)}
+                ></button>
+              </header>
+              <section className="modal-card-body">
+                <div className="field">
+                  <label className="label">Game Room Name</label>
+                  <div className="control">
+                    <input
+                        className="input"
+                        type="text"
+                        placeholder="Enter game room name"
+                        value={newGameName}
+                        onChange={(e) => setNewGameName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </section>
+              <footer className="modal-card-foot">
+                <button
+                    className="button is-success"
+                    onClick={createConnectFourGame}
+                >
+                  Create Game
+                </button>
+                <button
+                    className="button"
+                    onClick={() => setShowCreatConnectFourModal(false)}
+                >
+                  Cancel
+                </button>
+              </footer>
+            </div>
+          </div>
       )}
     </div>
   );
