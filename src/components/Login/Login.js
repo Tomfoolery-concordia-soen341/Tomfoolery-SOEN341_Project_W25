@@ -39,9 +39,6 @@ const Login = () => {
     navigate("/register");
   };
 
-  const GoToOffLineFriendList = () => {
-    navigate("/OffLineFriendList");
-  };
 
   return (
     <div
@@ -136,20 +133,6 @@ const Login = () => {
           Create an account?{" "}
           <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
             Register here
-          </span>
-        </h1>
-        <h1
-          onClick={GoToOffLineFriendList}
-          style={{
-            color: "#3273dc",
-            textAlign: "center",
-            marginTop: "1rem",
-            cursor: "pointer",
-          }}
-        >
-          Send Messages Offline?{" "}
-          <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
-            Click here
           </span>
         </h1>
       </div>
