@@ -1,470 +1,487 @@
-import React, {useEffect, useState} from "react";
-import {auth, db} from "../../config/firebase";
-import {signOut} from "firebase/auth";
+import React, { useEffect, useState } from "react";
+import { auth, db } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 import {
-    doc,
-    getDoc,
-    collection,
-    onSnapshot,
-    updateDoc,
-    serverTimestamp,
-    addDoc,
-    query,
-    where,
-    deleteDoc,
+  doc,
+  getDoc,
+  collection,
+  onSnapshot,
+  updateDoc,
+  serverTimestamp,
+  addDoc,
+  query,
+  where,
+  deleteDoc,
 } from "firebase/firestore";
-import {useAuthState} from "react-firebase-hooks/auth";
-import {useNavigate} from "react-router-dom";
-import {formatDistanceToNow} from "date-fns";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 
 const GameLobby = () => {
-    const [user] = useAuthState(auth);
-    const [username, setUsername] = useState("");
-    const [admin, setAdmin] = useState(false);
-    const [allUsers, setAllUsers] = useState([]);
-    const [showOnlineUsers, setShowOnlineUsers] = useState(false);
-    const [gameRooms, setGameRooms] = useState([]);
-    const [showCreateGameModal, setShowCreateGameModal] = useState(false);
-    const [newGameName, setNewGameName] = useState("");
-    const [currentRoom, setCurrentRoom] = useState(null);
-    const navigate = useNavigate();
+  const [user] = useAuthState(auth);
+  const [username, setUsername] = useState("");
+  const [admin, setAdmin] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [showOnlineUsers, setShowOnlineUsers] = useState(false);
+  const [gameRooms, setGameRooms] = useState([]);
+  const [showCreateGameModal, setShowCreateGameModal] = useState(false);
+  const [newGameName, setNewGameName] = useState("");
+  const [currentRoom, setCurrentRoom] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!user) return;
+  useEffect(() => {
+    if (!user) return;
 
-        const fetchUserData = async () => {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            setUsername(userDoc.data().username || user.email);
-            setAdmin(userDoc.data().role === "admin");
-        };
+    const fetchUserData = async () => {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      setUsername(userDoc.data().username || user.email);
+      setAdmin(userDoc.data().role === "admin");
+    };
 
-        const fetchUsers = onSnapshot(collection(db, "users"), (snapshot) => {
-            const usersData = snapshot.docs
-                .filter((doc) => doc.id !== user.uid)
-                .map((doc) => ({
-                    id: doc.id,
-                    username: doc.data().username,
-                    email: doc.data().email,
-                    displayName: doc.data().displayName,
-                    status: doc.data().status || "inactive",
-                    lastSeen: doc.data().lastSeen || null,
-                }))
-                .sort((a, b) =>
-                    a.status === "active" && b.status !== "active" ? -1 : 1
-                );
-            setAllUsers(usersData);
-        });
-
-        const fetchGameRooms = onSnapshot(
-            query(collection(db, "gameRooms"), where("gameType", "==", "TicTacToe")),
-            (snapshot) => {
-                setGameRooms(
-                    snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}))
-                );
-            }
+    const fetchUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const usersData = snapshot.docs
+        .filter((doc) => doc.id !== user.uid)
+        .map((doc) => ({
+          id: doc.id,
+          username: doc.data().username,
+          email: doc.data().email,
+          displayName: doc.data().displayName,
+          status: doc.data().status || "inactive",
+          lastSeen: doc.data().lastSeen || null,
+        }))
+        .sort((a, b) =>
+          a.status === "active" && b.status !== "active" ? -1 : 1
         );
+      setAllUsers(usersData);
+    });
 
-        fetchUserData();
-
-        return () => {
-            fetchUsers();
-            fetchGameRooms();
-        };
-    }, [user]);
-
-    useEffect(() => {
-        if (!user) return;
-
-        const fetchGameRooms = onSnapshot(
-            query(collection(db, "gameRooms"), where("gameType", "==", "TicTacToe")),
-            (snapshot) => {
-                setGameRooms(
-                    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-                );
-            }
+    const fetchGameRooms = onSnapshot(
+      query(collection(db, "gameRooms"), where("gameType", "==", "TicTacToe")),
+      (snapshot) => {
+        setGameRooms(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         );
+      }
+    );
 
-        return () => fetchGameRooms();
-    }, [user]);
+    fetchUserData();
 
-    const goToDashboard = () => navigate("/dashboard");
-    const goToFriends = () => navigate("/friends");
-    const goToProfile = () => navigate("/profile");
-
-    const handleLogout = async () => {
-        await updateDoc(doc(db, "users", user.uid), {
-            status: "inactive",
-            lastSeen: serverTimestamp(),
-        });
-        await signOut(auth);
-        navigate("/");
+    return () => {
+      fetchUsers();
+      fetchGameRooms();
     };
+  }, [user]);
 
-    const createTicTacToeGame = async () => {
-        if (!newGameName.trim()) return;
+  useEffect(() => {
+    if (!user) return;
 
-        try {
-            const newRoom = {
-                gameType: "TicTacToe",
-                name: newGameName,
-                createdBy: user.email,
-                players: [user.email],
-                status: "waiting",
-                createdAt: serverTimestamp(),
-                board: Array(9).fill(null),
-                currentPlayer: "X",
-                host: user.email,
-            };
+    const fetchGameRooms = onSnapshot(
+      query(collection(db, "gameRooms"), where("gameType", "==", "TicTacToe")),
+      (snapshot) => {
+        setGameRooms(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+      }
+    );
 
-            await addDoc(collection(db, "gameRooms"), newRoom);
-            setShowCreateGameModal(false);
-            setNewGameName("");
-        } catch (error) {
-            console.error("Error creating game room:", error);
-        }
-    };
+    return () => fetchGameRooms();
+  }, [user]);
 
-    const deleteGameRoom = async (roomId) => {
-        if (window.confirm("Are you sure you want to delete this game room?")) {
-            await deleteDoc(doc(db, "gameRooms", roomId));
-        }
-    };
+  const goToDashboard = () => navigate("/dashboard");
+  const goToFriends = () => navigate("/friends");
+  const goToProfile = () => navigate("/profile");
 
-    const joinGameRoom = async (room) => {
-        if (room.players.length >= 2) {
-            alert("This room is already full!");
-            return;
-        }
+  const handleLogout = async () => {
+    await updateDoc(doc(db, "users", user.uid), {
+      status: "inactive",
+      lastSeen: serverTimestamp(),
+    });
+    await signOut(auth);
+    navigate("/");
+  };
 
-        try {
-            await updateDoc(doc(db, "gameRooms", room.id), {
-                players: [...room.players, user.email],
-                status: room.players.length + 1 === 2 ? "playing" : "waiting",
-            });
-            navigate(`/tic-tac-toe/${room.id}`);
-        } catch (error) {
-            console.error("Error joining game room:", error);
-        }
-    };
+  const createTicTacToeGame = async () => {
+    if (!newGameName.trim()) return;
 
-    const startGame = (room) => {
-        navigate(`/tic-tac-toe/${room.id}`);
-    };
+    try {
+      const newRoom = {
+        gameType: "TicTacToe",
+        name: newGameName,
+        createdBy: user.email,
+        players: [user.email],
+        status: "waiting",
+        createdAt: serverTimestamp(),
+        board: Array(9).fill(null),
+        currentPlayer: "X",
+        host: user.email,
+      };
 
-    return (
-        <div
-            className="dashboard-layout has-background-light"
-            style={{minHeight: "100vh", display: "flex", flexDirection: "column"}}
-        >
-            {/* Top Navigation Bar */}
-            <nav className="navbar is-link is-fixed-top">
-                <div className="navbar-brand">
-                    <div className="navbar-item">
-                        <h1 className="title is-4 has-text-white">Game Lobby</h1>
-                    </div>
-                </div>
+      await addDoc(collection(db, "gameRooms"), newRoom);
+      setShowCreateGameModal(false);
+      setNewGameName("");
+    } catch (error) {
+      console.error("Error creating game room:", error);
+    }
+  };
 
-                <div className="navbar-menu">
-                    <div className="navbar-start">
-                        <div className="navbar-item">
-                            <button
-                                className="button is-info is-medium"
-                                onClick={goToDashboard}
-                            >
+  const deleteGameRoom = async (roomId) => {
+    if (window.confirm("Are you sure you want to delete this game room?")) {
+      await deleteDoc(doc(db, "gameRooms", roomId));
+    }
+  };
+
+  const joinGameRoom = async (room) => {
+    if (room.players.length >= 2) {
+      alert("This room is already full!");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "gameRooms", room.id), {
+        players: [...room.players, user.email],
+        status: room.players.length + 1 === 2 ? "playing" : "waiting",
+      });
+      navigate(`/tic-tac-toe/${room.id}`);
+    } catch (error) {
+      console.error("Error joining game room:", error);
+    }
+  };
+
+  const startGame = (room) => {
+    navigate(`/tic-tac-toe/${room.id}`);
+  };
+
+  return (
+    <div
+      className="dashboard-layout has-background-light"
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
+      {/* Top Navigation Bar */}
+      <nav className="navbar is-link is-fixed-top">
+        <div className="navbar-brand">
+          <div className="navbar-item">
+            <h1 className="title is-4 has-text-white">Game Lobby</h1>
+          </div>
+        </div>
+
+        <div className="navbar-menu">
+          <div className="navbar-start">
+            <div className="navbar-item">
+              <button
+                className="button is-info is-medium"
+                onClick={goToDashboard}
+              >
                 <span className="icon">
                   <i className="fas fa-arrow-left"></i>
                 </span>
-                                <span>Back to Dashboard</span>
-                            </button>
-                        </div>
-                    </div>
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
+          </div>
 
-                    <div className="navbar-end">
-                        <div className="navbar-item has-dropdown is-hoverable">
-                            <div className="navbar-link is-flex is-align-items-center">
-                                <figure className="image is-32x32 mr-2">
-                                    <div
-                                        className="is-rounded has-background-info has-text-white is-flex is-justify-content-center is-align-items-center"
-                                        style={{
-                                            width: "32px",
-                                            height: "32px",
-                                            borderRadius: "50%",
-                                        }}
-                                    >
-                                        {username?.charAt(0).toUpperCase()}
-                                    </div>
-                                </figure>
-                                <span>{username}</span>
-                                {admin && <span className="tag ml-2">Admin</span>}
-                            </div>
-                            <div className="navbar-dropdown">
-                                <a className="navbar-item" onClick={goToProfile}>
+          <div className="navbar-end">
+            <div className="navbar-item has-dropdown is-hoverable">
+              <div className="navbar-link is-flex is-align-items-center">
+                <figure className="image is-32x32 mr-2">
+                  <div
+                    className="is-rounded has-background-info has-text-white is-flex is-justify-content-center is-align-items-center"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    {username?.charAt(0).toUpperCase()}
+                  </div>
+                </figure>
+                <span>{username}</span>
+                {admin && <span className="tag ml-2">Admin</span>}
+              </div>
+              <div className="navbar-dropdown">
+                <a className="navbar-item" onClick={goToProfile}>
                   <span className="icon">
                     <i className="fas fa-user"></i>
                   </span>
-                                    <span>Profile</span>
-                                </a>
-                                <a className="navbar-item" onClick={goToFriends}>
+                  <span>Profile</span>
+                </a>
+                <a className="navbar-item" onClick={goToFriends}>
                   <span className="icon">
                     <i className="fas fa-users"></i>
                   </span>
-                                    <span>Friends</span>
-                                </a>
-                                <hr className="navbar-divider"/>
-                                <a className="navbar-item" onClick={handleLogout}>
+                  <span>Friends</span>
+                </a>
+                <hr className="navbar-divider" />
+                <a className="navbar-item" onClick={handleLogout}>
                   <span className="icon">
                     <i className="fas fa-sign-out-alt"></i>
                   </span>
-                                    <span>Logout</span>
-                                </a>
-                            </div>
-                        </div>
+                  <span>Logout</span>
+                </a>
+              </div>
+            </div>
 
-                        <div className="navbar-item">
-                            <button
-                                className={`button is-link is-medium ${
-                                    showOnlineUsers ? "is-rounded" : ""
-                                }`}
-                                style={{
-                                    borderRadius: showOnlineUsers ? "8px" : "50%",
-                                }}
-                                onClick={() => setShowOnlineUsers(!showOnlineUsers)}
-                            >
+            <div className="navbar-item">
+              <button
+                className={`button is-link is-medium ${
+                  showOnlineUsers ? "is-rounded" : ""
+                }`}
+                style={{
+                  borderRadius: showOnlineUsers ? "8px" : "50%",
+                }}
+                onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+              >
                 <span className="icon">
                   <i className="fas fa-users"></i>
                 </span>
-                                {showOnlineUsers && (
-                                    <span className="ml-2">
+                {showOnlineUsers && (
+                  <span className="ml-2">
                     Online Users (
-                                        {allUsers.filter((u) => u.status === "active").length})
+                    {allUsers.filter((u) => u.status === "active").length})
                   </span>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content Area */}
+      <div
+        className={`columns is-gapless mt-6 ${
+          showOnlineUsers ? "has-sidebar" : ""
+        }`}
+        style={{ flex: 1 }}
+      >
+        {/* Game Lobby Content */}
+        <div
+          className={`column ${
+            showOnlineUsers ? "is-three-quarters" : "is-fullwidth"
+          }`}
+        >
+          <section className="section">
+            <div className="container">
+              <div className="level">
+                <div className="level-left">
+                  <h2 className="title is-3 has-text-black">Available Games</h2>
                 </div>
-            </nav>
+              </div>
 
-            {/* Main Content Area */}
-            <div
-                className={`columns is-gapless mt-6 ${
-                    showOnlineUsers ? "has-sidebar" : ""
-                }`}
-                style={{flex: 1}}
-            >
-                {/* Game Lobby Content */}
-                <div
-                    className={`column ${
-                        showOnlineUsers ? "is-three-quarters" : "is-fullwidth"
-                    }`}
-                >
-                    <section className="section">
-                        <div className="container">
-                            <div className="level">
-                                <div className="level-left">
-                                    <h2 className="title is-3 has-text-black">Available Games</h2>
-                                </div>
-                            </div>
-
-                            {/* Game Rooms Section */}
-                            {/* Games Section */}
-                            <div className="box">
-                                <h3 className="subtitle is-5 has-text-link">
+              {/* Game Rooms Section */}
+              {/* Games Section */}
+              <div className="box">
+                <h3 className="subtitle is-5 has-text-link">
                   <span className="icon mr-2">
                     <i className="fas fa-gamepad"></i>
                   </span>
-                                    Select a Game
-                                </h3>
-                                <div className="buttons">
-                                    <button
-                                        className="button is-primary is-medium"
-                                        onClick={() => setShowCreateGameModal(true)}
-                                    >
+                  Select a Game
+                </h3>
+                <div className="buttons">
+                  <button
+                    className="button is-primary is-medium"
+                    onClick={() => setShowCreateGameModal(true)}
+                  >
                     <span className="icon">
                       <i className="fas fa-times"></i>
                     </span>
-                                        <span>Tic Tac Toe</span>
-                                    </button>
-                                    <button className="button is-primary is-medium" disabled>
+                    <span>Tic Tac Toe</span>
+                  </button>
+                  <button className="button is-primary is-medium" disabled>
                     <span className="icon">
                       <i className="fas fa-coins"></i>
                     </span>
-                                        <span>Connect-4 (Coming Soon)</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="box">
-                                <h3 className="subtitle is-5 has-text-link">
-          <span className="icon mr-2">
-            <i className="fas fa-door-open"></i>
-          </span>
-                                    Active Tic Tac Toe Rooms
-                                </h3>
-
-                                {gameRooms.length > 0 ? (
-                                    <div className="table-container">
-                                        <table className="table is-fullwidth is-striped">
-                                            <thead>
-                                            <tr>
-                                                <th>Room Name</th>
-                                                <th>Created By</th>
-                                                <th>Players</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {gameRooms.map((room) => (
-                                                <tr key={room.id}>
-                                                    <td>{room.name}</td>
-                                                    <td>{room.createdBy}</td>
-                                                    <td>
-                                                        <div className="tags">
-                                                            {room.players.map((player, index) => (
-                                                                <span key={index} className="tag is-primary">
-                            {player}
-                          </span>
-                                                            ))}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                      <span className={`tag ${
-                          room.status === "waiting" ? "is-warning" : "is-success"
-                      }`}>
-                        {room.status}
-                      </span>
-                                                    </td>
-                                                    <td>
-                                                        {room.players.includes(user.email) ? (
-                                                            <button
-                                                                className="button is-small is-info"
-                                                                onClick={() => navigate(`/tic-tac-toe/${room.id}`)}
-                                                            >
-                                                                Rejoin
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                className="button is-small is-info"
-                                                                onClick={() => joinGameRoom(room)}
-                                                                disabled={room.players.length >= 2}
-                                                            >
-                                                                Join
-                                                            </button>
-                                                        )}
-                                                        {room.host === user.email && (
-                                                            <button
-                                                                className="button is-small is-danger ml-2"
-                                                                onClick={() => deleteGameRoom(room.id)}
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="content">
-                                        <p>No active Tic Tac Toe rooms. Create one to get started!</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </section>
+                    <span>Connect-4 (Coming Soon)</span>
+                  </button>
                 </div>
+              </div>
+              <div className="box">
+                <h3 className="subtitle is-5 has-text-link">
+                  <span className="icon mr-2">
+                    <i className="fas fa-door-open"></i>
+                  </span>
+                  Active Tic Tac Toe Rooms
+                </h3>
 
-                {/* Online Users Sidebar */}
-                <div className="column is-narrow">
-                    {showOnlineUsers && (
-                        <div
-                            className="box"
-                            style={{
-                                position: "fixed",
-                                right: "0",
-                                top: "4rem",
-                                width: "100%",
-                                maxWidth: "300px",
-                                height: "calc(100vh - 2rem)",
-                                overflowY: "auto",
-                            }}
-                        >
-                            <div className="menu">
-                                <ul className="menu-list">
-                                    {allUsers.map((user) => (
-                                        <li key={user.id}>
-                                            <a className="is-flex is-align-items-center py-2">
+                {gameRooms.length > 0 ? (
+                  <div className="table-container">
+                    <table className="table is-fullwidth is-striped">
+                      <thead>
+                        <tr>
+                          <th>Room Name</th>
+                          <th>Created By</th>
+                          <th>Players</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gameRooms.map((room) => (
+                          <tr key={room.id}>
+                            <td>{room.name}</td>
+                            <td>{room.createdBy}</td>
+                            <td>
+                              <div className="tags">
+                                {room.players.map((player, index) => (
+                                  <span key={index} className="tag is-primary">
+                                    {player}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`tag ${
+                                  room.status === "waiting"
+                                    ? "is-warning"
+                                    : "is-success"
+                                }`}
+                              >
+                                {room.status}
+                              </span>
+                            </td>
+                            <td>
+                              {room.players.includes(user.email) ? (
+                                <button
+                                  className="button is-small is-info"
+                                  onClick={() =>
+                                    navigate(`/tic-tac-toe/${room.id}`)
+                                  }
+                                >
+                                  Rejoin
+                                </button>
+                              ) : (
+                                <button
+                                  className="button is-small is-info"
+                                  onClick={() => joinGameRoom(room)}
+                                  disabled={room.players.length >= 2}
+                                >
+                                  Join
+                                </button>
+                              )}
+                              {room.host === user.email && (
+                                <button
+                                  className="button is-small is-danger ml-2"
+                                  onClick={() => deleteGameRoom(room.id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="content">
+                    <p>
+                      No active Tic Tac Toe rooms. Create one to get started!
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Online Users Sidebar */}
+        <div className="column is-narrow">
+          {showOnlineUsers && (
+            <div
+              className="box"
+              style={{
+                position: "fixed",
+                right: "0",
+                top: "4rem",
+                width: "100%",
+                maxWidth: "300px",
+                height: "calc(100vh - 2rem)",
+                overflowY: "auto",
+              }}
+            >
+              <div className="menu">
+                <ul className="menu-list">
+                  {allUsers.map((user) => (
+                    <li key={user.id}>
+                      <a className="is-flex is-align-items-center py-2">
                         <span
-                            className={`icon mr-3 ${
-                                user.status === "active"
-                                    ? "has-text-success"
-                                    : "has-text-grey-light"
-                            }`}
+                          className={`icon mr-3 ${
+                            user.status === "active"
+                              ? "has-text-success"
+                              : "has-text-grey-light"
+                          }`}
                         >
                           <i className="fas fa-circle"></i>
                         </span>
-                                                <span>{user.displayName}</span>
-                                                <span className="tag is-light is-pulled-right">
+                        <span>{user.displayName}</span>
+                        <span className="tag is-light is-pulled-right">
                           {user.status === "active"
-                              ? "Online"
-                              : formatDistanceToNow(
-                                  user.lastSeen?.toDate() || new Date(),
-                                  {
-                                      addSuffix: true,
-                                  }
+                            ? "Online"
+                            : formatDistanceToNow(
+                                user.lastSeen?.toDate() || new Date(),
+                                {
+                                  addSuffix: true,
+                                }
                               )}
                         </span>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-
-            {/* Create Game Modal */}
-            {showCreateGameModal && (
-                <div className="modal is-active">
-                    <div className="modal-background" onClick={() => setShowCreateGameModal(false)}></div>
-                    <div className="modal-card">
-                        <header className="modal-card-head">
-                            <p className="modal-card-title">Create Tic Tac Toe Game</p>
-                            <button
-                                className="delete"
-                                aria-label="close"
-                                onClick={() => setShowCreateGameModal(false)}
-                            ></button>
-                        </header>
-                        <section className="modal-card-body">
-                            <div className="field">
-                                <label className="label">Game Room Name</label>
-                                <div className="control">
-                                    <input
-                                        className="input"
-                                        type="text"
-                                        placeholder="Enter game room name"
-                                        value={newGameName}
-                                        onChange={(e) => setNewGameName(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                        <footer className="modal-card-foot">
-                            <button className="button is-success" onClick={createTicTacToeGame}>
-                                Create Game
-                            </button>
-                            <button className="button" onClick={() => setShowCreateGameModal(false)}>
-                                Cancel
-                            </button>
-                        </footer>
-                    </div>
-                </div>
-            )}
+          )}
         </div>
-    );
+      </div>
+
+      {/* Create Game Modal */}
+      {showCreateGameModal && (
+        <div className="modal is-active">
+          <div
+            className="modal-background"
+            onClick={() => setShowCreateGameModal(false)}
+          ></div>
+          <div className="modal-card">
+            <header className="modal-card-head">
+              <p className="modal-card-title">Create Tic Tac Toe Game</p>
+              <button
+                className="delete"
+                aria-label="close"
+                onClick={() => setShowCreateGameModal(false)}
+              ></button>
+            </header>
+            <section className="modal-card-body">
+              <div className="field">
+                <label className="label">Game Room Name</label>
+                <div className="control">
+                  <input
+                    className="input"
+                    type="text"
+                    placeholder="Enter game room name"
+                    value={newGameName}
+                    onChange={(e) => setNewGameName(e.target.value)}
+                  />
+                </div>
+              </div>
+            </section>
+            <footer className="modal-card-foot">
+              <button
+                className="button is-success"
+                onClick={createTicTacToeGame}
+              >
+                Create Game
+              </button>
+              <button
+                className="button"
+                onClick={() => setShowCreateGameModal(false)}
+              >
+                Cancel
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default GameLobby;
