@@ -8,7 +8,6 @@ const Register = () => {
   const [RegisterEmail, setRegisterEmail] = useState("");
   const [RegisterPassword, setRegisterPassword] = useState("");
   const [RegisterUsername, setRegisterUsername] = useState("");
-  const [role, setRole] = useState("");
   const navigate = useNavigate();
 
   const Register = async (e) => {
@@ -24,7 +23,7 @@ const Register = () => {
       await setDoc(doc(db, "users", user.uid), {
         displayName: RegisterUsername,
         email: RegisterEmail,
-        role: role,
+        role: "user",
         lastSeen: serverTimestamp(),
         status: "active",
         friends: [],
@@ -141,32 +140,6 @@ const Register = () => {
                 borderRadius: "4px",
               }}
             />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label
-              style={{
-                color: "#3273dc",
-                display: "block",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Role
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                border: "1px solid #3273dc",
-                borderRadius: "4px",
-              }}
-            >
-              <option value="">Select a role</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-            </select>
           </div>
           <button
             type="submit"
