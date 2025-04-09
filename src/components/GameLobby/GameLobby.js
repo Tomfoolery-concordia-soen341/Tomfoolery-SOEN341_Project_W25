@@ -66,11 +66,21 @@ const GameLobby = () => {
       }
     );
 
+    const fetchConnectFourRooms = onSnapshot(
+        query(collection(db, "gameRooms"), where("gameType", "==", "connectFour")),
+        (snapshot) => {
+          setConnectFourRooms(
+              snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+          );
+        }
+    );
+
     fetchUserData();
 
     return () => {
       fetchUsers();
       fetchGameRooms();
+      fetchConnectFourRooms();
     };
   }, [user]);
 
@@ -103,7 +113,7 @@ const GameLobby = () => {
     console.log(connectFourRooms);
 
     return () => fetchConnectFourRooms();
-  }, []);
+  }, [user]);
 
   const goToDashboard = () => navigate("/dashboard");
   const goToFriends = () => navigate("/friends");
@@ -183,14 +193,23 @@ const GameLobby = () => {
         players: [...room.players, user.email],
         status: room.players.length + 1 === 2 ? "playing" : "waiting",
       });
-      navigate(`/tic-tac-toe/${room.id}`);
+      if (room.gameType === "TicTacToe") {
+        navigate(`/tic-tac-toe/${room.id}`);
+      } else if (room.gameType === "ConnectFourGame") {
+        navigate(`connect-four/${room.id}`);
+      }
+
     } catch (error) {
       console.error("Error joining game room:", error);
     }
   };
 
   const startGame = (room) => {
-    navigate(`/tic-tac-toe/${room.id}`);
+    if (room.gameType === "TicTacToe") {
+      navigate(`/tic-tac-toe/${room.id}`);
+    } else if (room.gameType === "ConnectFourGame") {
+      navigate(`connect-four/${room.id}`);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -339,7 +358,7 @@ const GameLobby = () => {
                     <span className="icon">
                       <i className="fas fa-coins"></i>
                     </span>
-                    <span>Connect-4 (Coming Soon)</span>
+                    <span>Connect-4</span>
                   </button>
                 </div>
               </div>
@@ -437,7 +456,7 @@ const GameLobby = () => {
                   Active Connect-4 Rooms
                 </h3>
 
-                {gameRooms.length > 0 ? (
+                {connectFourRooms.length > 0 ? (
                     <div className="table-container">
                       <table className="table is-fullwidth is-striped">
                         <thead>
@@ -479,7 +498,7 @@ const GameLobby = () => {
                                     <button
                                         className="button is-small is-info"
                                         onClick={() =>
-                                            navigate(`/tic-tac-toe/${room.id}`)
+                                            navigate(`/connect-four/${room.id}`)
                                         }
                                     >
                                       Rejoin

@@ -12,6 +12,7 @@ import TicTacToe from "./components/Game/TicTacToe";
 import "bulma/css/bulma.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import GameLobby from "./components/GameLobby/GameLobby";
+import ConnectFourPage from "./components/ConnectFourPage";
 function App() {
   return (
     <Router>
@@ -23,6 +24,7 @@ function App() {
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Profile" element={<ProfilePage />} />
         <Route path="/TicTacToe" element={<TicTacToe />} />
+        <Route path="/connect-four/:roomID" element={<ConnectFourPage />} />
         <Route path="/game-lobby" element={<GameLobby />} />
         <Route path="/tic-tac-toe/:roomId" element={<TicTacToe />} />
       </Routes>
