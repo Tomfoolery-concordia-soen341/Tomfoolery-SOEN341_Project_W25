@@ -1,622 +1,719 @@
-import React, {useState, useEffect, useRef} from "react";
-import {useLocation} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-    doc,
-    updateDoc,
-    arrayUnion,
-    getDoc,
-    where,
-    collection,
-    orderBy,
-    getDocs,
-    onSnapshot,
-    addDoc,
-    serverTimestamp,
-    arrayRemove,
-    query,
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+  collection,
+  orderBy,
+  getDocs,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  arrayRemove,
+  query,
+  where,
 } from "firebase/firestore";
-import {useAuthState} from "react-firebase-hooks/auth";
-import {auth, db} from "../../config/firebase";
-import {useNavigate} from "react-router-dom";
-import {deleteDoc} from "firebase/firestore";
-import "./Channel.css";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../config/firebase";
 import ContextMenu from "../ContextMenu/ContextMenu";
-import {format, formatDistanceToNow} from "date-fns";
+
+// Utility function to fetch channel data
+const fetchChannelData = async (channelId, user, setAdmin, setMembers, setOwnerEmail, setRequests, setOwner) => {
+  const userDoc = await getDoc(doc(db, "users", user.uid));
+  if (userDoc.data().role === "admin") setAdmin(true);
+
+  const channelSnap = await getDoc(doc(db, "privateChannels", channelId));
+  if (channelSnap.exists()) {
+    const channelData = channelSnap.data();
+    setMembers(channelData.members || []);
+    setOwnerEmail(channelData.owner);
+    setRequests(channelData.request || []);
+    setOwner(channelData.owner === user.email);
+  }
+};
+
+// Utility function to fetch all users
+const fetchAllUsers = async (setAllUsers) => {
+  const querySnapshot = await getDocs(collection(db, "users"));
+  const users = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  setAllUsers(users);
+};
+
+// Fetch user display names and map them to their emails
+const fetchUserDisplayNames = async () => {
+  const querySnapshot = await getDocs(collection(db, "users"));
+  const userMap = {};
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    userMap[data.email] = data.displayName; // Map email to displayName
+  });
+  return userMap;
+};
+
+// Add this function to fetch online users
+const fetchOnlineUsers = async (setOnlineUsers) => {
+  const querySnapshot = await getDocs(
+    query(collection(db, "users"), where("isOnline", "==", true))
+  );
+  const onlineUsers = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  setOnlineUsers(onlineUsers);
+};
+
+// Component for Requests List
+const RequestsList = ({ requests, AcceptRequest, DeleteRequest }) => (
+  <div className="mt-5">
+    <h3 className="title is-5">Requests</h3>
+    <ul>
+      {requests.map((requester, index) => (
+        <li key={index} className="mb-2">
+          {requester}
+          <div className="buttons mt-2">
+            <button
+              className="button is-success is-small"
+              onClick={() => AcceptRequest(requester)}
+            >
+              Accept
+            </button>
+            <button
+              className="button is-danger is-small"
+              onClick={() => DeleteRequest(requester)}
+            >
+              Reject
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+// Component for Add Member Form
+const AddMemberForm = ({ allUsers, members, selectedMember, setSelectedMember, addMember }) => (
+  <div className="mt-5">
+    <div className="field has-addons">
+      <div className="control is-expanded">
+        <div className="select is-fullwidth">
+          <select
+            value={selectedMember}
+            onChange={(e) => setSelectedMember(e.target.value)}
+          >
+            <option value="">Select a member</option>
+            {allUsers
+              .filter((user) => !members.includes(user.email))
+              .map((user) => (
+                <option key={user.id} value={user.email}>
+                  {user.email}
+                </option>
+              ))}
+          </select>
+        </div>
+      </div>
+      <div className="control">
+        <button className="button is-link" onClick={addMember}>
+          Add
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 const Channel = () => {
-    const {state} = useLocation();
-    const {channel} = state;
-    const [user] = useAuthState(auth);
-    //boolean values for private channel control
-    const [admin, setAdmin] = useState(false);
-    const [owner, setOwner] = useState(false);
-    const [ownerEmail, setOwnerEmail] = useState("");
-    const [members, setMembers] = useState([]);
+  const { state } = useLocation();
+  const { channel } = state;
+  const [user] = useAuthState(auth);
+  const [admin, setAdmin] = useState(false);
+  const [owner, setOwner] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [members, setMembers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [contextMenu, setContextMenu] = useState({
+    position: { x: 0, y: 0 },
+    toggled: false,
+    message: null,
+  });
+  const [quotedMessage, setQuotedMessage] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]); // State for online users
+  const [userDisplayNames, setUserDisplayNames] = useState({}); // State for email-to-displayName mapping
+  const navigate = useNavigate();
+  const chatContainerRef = useRef(null);
+  const contextMenuRef = useRef(null);
 
-    //list of all users to add
-    const [allUsers, setAllUsers] = useState([]);
-    //selected members on dropdown
-    const [selectedMember, setSelectedMember] = useState("");
-    //return function
-    const navigate = useNavigate();
-    //message handling
-    const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState("");
-    const chatEndRef = useRef(null);
-    const [quotedMessage, setQuotedMessage] = useState(null); // State for quoted message
-    const [newMessageNotification, setNewMessageNotification] = useState({
-        show: false,
-        count: 0
+  // Scroll to the bottom of the chat
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Add member
+  const addMember = async () => {
+    if (!selectedMember) {
+      alert("Please select a member.");
+      return;
+    }
+    await updateDoc(doc(db, "privateChannels", channel.id), {
+      members: arrayUnion(selectedMember),
     });
+    setMembers((prev) => [...prev, selectedMember]);
+    setSelectedMember("");
+    alert(`Added ${selectedMember} to ${channel.name}`);
+  };
 
-    //request handling
-    const [requestToUpdate, setRequestToUpdate] = useState(false);
-    const [requests, setRequests] = useState([]);
+  // Accept or delete request
+  const handleRequest = async (requester, action) => {
+    const channelRef = doc(db, "privateChannels", channel.id);
+    if (action === "accept") {
+      await updateDoc(channelRef, {
+        members: arrayUnion(requester),
+        request: arrayRemove(requester),
+      });
+      alert(`Accepted ${requester} to ${channel.name}`);
+    } else if (action === "reject") {
+      await updateDoc(channelRef, {
+        request: arrayRemove(requester),
+      });
+      alert(`Rejected ${requester} request for ${channel.name}`);
+    }
+    fetchChannelData(channel.id, user, setAdmin, setMembers, setOwnerEmail, setRequests, setOwner);
+  };
 
-
-    //status handling
-    const [membersWithStatus, setMembersWithStatus] = useState([]);
-
-    //context menu
-    const contextMenuRef = useRef(null);
-    const [contextMenu, setContextMenu] = useState({
-        position: {
-            x: 0,
-            y: 0,
-        },
-        toggled: false,
-        message: null, //track the right-clicked message
-    });
-
-    // Fetch the channel's data
-    const fetchChannelData = async () => {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.data().role === "admin") {
-            setAdmin(true);
-        }
-
-        const channelSnap = await getDoc(doc(db, "channels", channel.id));
-        if (channelSnap.exists()) {
-            const channelData = channelSnap.data();
-            console.log("Channel data:", channelData);
-
-            // Set basic channel data
-            const memberEmails = channelData.members || [];
-                setMembers(memberEmails);
-                setOwnerEmail(channelData.owner);
-                setRequests(channelData.request || []);
-
-            // Fetch complete user data for each member
-            if (memberEmails.length > 0) {
-                // Query all users where email is in our members list
-                const usersQuery = query(
-                    collection(db, "users"),
-                    where("email", "in", memberEmails)
-                );
-
-                const querySnapshot = await getDocs(usersQuery);
-
-                // Map through results to get complete user data
-                const membersData = querySnapshot.docs.map((doc) => ({
-                    id: doc.id, // the random document ID
-                    ...doc.data(), // all user data including email, status, etc.
-                }));
-
-                // Create a map for quick lookup by email
-                const membersMap = {};
-                membersData.forEach((member) => {
-                    membersMap[member.email] = member;
-                });
-
-                // Combine with original member list to maintain order
-                const completeMembers = memberEmails.map((email) => ({
-                    email,
-                    ...(membersMap[email] || {status: "unknown"}), // fallback if user not found
-                }));
-
-                setMembersWithStatus(completeMembers);
-                console.log("Complete members data:", completeMembers);
-            }
-        }
-
-        if (channelSnap.data().owner === user.email) {
-            setOwner(true);
-        } else {
-            setOwner(false);
-        }
-    };
-
-    // Fetch all users
-    const fetchUsers = async () => {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        const users = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-        setAllUsers(users);
-    };
-
-    //add member function
-    const addMember = async () => {
-        if (!selectedMember) {
-            alert("Please select a member.");
-            return;
-        }
-        await updateDoc(doc(db, "channels", channel.id), {
-            members: arrayUnion(selectedMember), // Add the selected member to Firestore
-        });
-
-        setMembers((prev) => [...prev, selectedMember]); // Update local members state
-        setSelectedMember(""); // Clear dropdown
-        alert(`Added ${selectedMember} to ${channel.name}`);
-    };
-
-    //get messages for chat
-    const GetMessages = () => {
-        const sorter = query(
-            collection(db, "channels", channel.id, "messages"),
-            orderBy("timestamp")
-        );
-
-
-        onSnapshot(sorter, (snapshot) => {
-            const messagesData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-
-            console.log(messagesData)
-            // Check if new messages arrived
-            if (messagesData.length > messages.length) {
-                const lastMessage = messagesData[messagesData.length - 1];
-
-                // Only notify if message isn't from current user
-                if (lastMessage.sender !== user.email) {
-                    setNewMessageNotification(prev => ({
-                        show: true,
-                        count: prev.count + 0.5
-                    }));
-                }
-            }
-            setMessages(messagesData);
-        });
-    };
-
-    //send message function
-    const sendMessage = async () => {
-        if (!newMessage.trim()) return; // if there are no messages.
-
-        // Get the current user's data to include username
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-
-        //add the new message to the database
-        addDoc(collection(db, "channels", channel.id, "messages"), {
-            text: newMessage,
-            sender: auth.currentUser.email,
-            senderUsername: userData.displayName,
-            timestamp: serverTimestamp(),
-            quotedMessage: quotedMessage
-                ? {
-                    sender: quotedMessage.sender,
-                    senderUsername: quotedMessage.senderUsername, // Include username in quoted message
-                    text: quotedMessage.text,
-                }
-                : null, // Include quoted message details
-        })
-            //after it adds, then it will clear the message
-            .then(() => {
-                //clear the new message, wait for new one.
-                setNewMessage("");
-                setQuotedMessage(null); // Clear quoted message after sending
-            })
-            //error handling
-            .catch((error) => {
-                console.error("Error sending message:", error);
-                alert("Failed to send message.");
-            });
-    };
-
-    //leave the channel, meaning you won't be able to get back for free.
-    const leaveChannel = async () => {
-        if (owner) {
-            const confirm = window.confirm(
-                "Do you want to leave this channel? This action will not delete the channel."
-            );
-            if (!confirm) return;
-        } else {
-            const confirm = window.confirm("Do you want to leave this channel?");
-            if (!confirm) return;
-        }
-
-        await updateDoc(doc(db, "channels", channel.id), {
-            members: arrayRemove(user.email),
-        }).then(() => {
-            BackToDashboard();
-        });
-    };
-
-    //delete message function
-    const DeleteMessage = async (message) => {
-        //exception handling
-        if (!message || !channel) {
-            console.log("Message or channel is invalid:", message, channel);
-            alert("Invalid message or channel ID.");
-            return;
-        }
-
-        //console check
-        console.log("Message ID to delete:", message.id);
-
-        //pop-up message yes or no
-        const confirmDelete = window.confirm("Delete this message?");
-
-        //if no, return
-        if (!confirmDelete) return;
-
-        //if yes, try to delete
-        try {
-            //delete message from database
-            await deleteDoc(
-                doc(db, `channel/${channel.id}/messages`, message.id)
-            );
-
-            //update the chat
-            setMessages(messages.filter((msg) => msg.id !== message.id));
-
-            //confirmation
-            alert("Message deleted successfully.");
-        } catch (error) {
-            //error handling
-            console.error("Error deleting message:", error);
-            alert("Failed to delete message.");
-        }
-    };
-
-    //accept requests to join a channel
-    const AcceptRequest = async (requester) => {
-        //reference
-        const channelRef = doc(db, "channels", channel.id);
-        //when accepted, will add the user to the channel
-        await updateDoc(channelRef, {
-            members: arrayUnion(requester),
-            request: arrayRemove(requester),
-        });
-        //confirmation message
-        alert(`Accepted ${requester} to ${channel.name}`);
-        //wait for another request reset the variable.
-        setRequestToUpdate(true);
-    };
-
-    //delete requests to a channel
-    const DeleteRequest = async (requester) => {
-        //update the document of requests, and remove the request
-        await updateDoc(doc(db, "channels", channel.id), {
-            request: arrayRemove(requester),
-        });
-        //confirmation
-        alert(`Rejected ${requester} request for ${channel.name}`);
-        //accept requests again. new requests will show again.
-        setRequestToUpdate(true);
-    };
-    //context menu
-    const resetContextMenu = () => {
-        setMessages((prevMessages) =>
-            prevMessages.map((message) => ({
-                ...message,
-                selected: false, // Remove highlight from all messages
-            }))
-        );
-
-        setContextMenu({
-            position: {
-                x: 0,
-                y: 0,
-            },
-            toggled: false,
-            message: null, // Clear the right-clicked message
-        });
-    };
-    const handleOnContextMenu = (e, rightClick) => {
-        e.preventDefault();
-
-        if (!contextMenuRef.current) {
-            console.error("Context menu ref is not assigned.");
-            return;
-        }
-
-        const contextMenuAttr = contextMenuRef.current.getBoundingClientRect();
-        const isLeft = e.clientX < window?.innerWidth / 2;
-        let x;
-        let y = e.clientY;
-
-        if (isLeft) {
-            x = e.clientX;
-        } else {
-            x = e.clientX - contextMenuAttr.width;
-        }
-
-        setContextMenu({
-            position: {
-                x,
-                y,
-            },
-            toggled: true,
-            message: rightClick, // Pass the right-clicked message
-        });
-
-        // Update the messages state to highlight the selected message
-        setMessages((prevMessages) =>
-            prevMessages.map((message) => ({
-                ...message,
-                selected: message.id === rightClick.id, // Highlight the selected message
-            }))
-        );
-
-        console.log("Context menu toggled:", true); // Debug log
-        console.log("Right-clicked item:", rightClick);
-    };
-
-    //status
-    const formatLastSeen = (timestamp, status) => {
-        if (status === "active") return "Online";
-        if (!timestamp) return "Offline";
-        const date = timestamp.toDate();
-        return `Last seen: ${formatDistanceToNow(date, {addSuffix: true})}`;
-    };
-    const isOnline = (status) => {
-        return status === "active";
-    };
-
-    //context menu toggling
-    useEffect(() => {
-        function handler(e) {
-            if (
-                contextMenuRef.current &&
-                !contextMenuRef.current.contains(e.target)
-            ) {
-                resetContextMenu();
-            }
-        }
-
-        document.addEventListener("click", handler);
-        return () => {
-            document.removeEventListener("click", handler);
-        };
-    }, [contextMenu.toggled]);
-
-    //update when there is a request
-    useEffect(() => {
-        fetchChannelData()
-            .then(() => fetchUsers())
-            .then(() => GetMessages())
-            .then(() => setRequestToUpdate(false)) //stop updating
-            .catch((error) => {
-                console.error("Error fetching data:", error);
-            });
-    }, [requestToUpdate]);
-
-    //return function
-    const BackToDashboard = () => {
-        navigate("/Dashboard");
-    };
-
-    //sending time
-    const formatMessageTime = (timestamp: any) => {
-        if (!timestamp) return 'Sending...';
-        try {
-            return (" ") + format(timestamp?.toDate(), 'y')  + ("-") +
-                           format(timestamp?.toDate(), 'MM') + ("-") +
-                           format(timestamp?.toDate(), 'dd') + (" ") +
-                           format(timestamp?.toDate(), 'h:mm a');
-        } catch (e) {
-            return '';
-        }
-    };
-
-    return (
-        <div className="channel-layout">
-            {/* left is channel info */}
-            <div className="channel-info-column">
-                <div className="channel-info">
-                    <h1>{channel.isDefault ? "Public " : "Private "}Channel:  <br/>{channel.name} </h1>
-                    {(admin && !channel.isDefault) && <div className="owner-info">Owner: {ownerEmail}</div>}
-                        <div style={{'font-size':'23px'}}> Be careful to not share and personal information such as your password! </div>
-                    {!admin && !channel.isDefault && (
-                        <button className="leave-channel-btn" onClick={leaveChannel}>
-                            Leave Channel
-                        </button>
-                    )}
-
-                    {(owner) && requests.length > 0 && (
-                        <div className="requests-section">
-                            <h3>Requests</h3>
-                            <ul className="requests-list">
-                                {requests.map((member, index) => (
-                                    <li key={index}>
-                                        {member.name}
-                                        <div className="request-actions">
-                                            <button
-                                                className="accept-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    AcceptRequest(member);
-                                                }}
-                                            >
-                                                Accept
-                                            </button>
-                                            <button
-                                                className="delete-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    DeleteRequest(member);
-                                                }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {(owner) && (
-                        <div className="add-member-section">
-                            <h3>Add Member</h3>
-                            <div className="member-selector">
-                                <select
-                                    value={selectedMember}
-                                    onChange={(e) => setSelectedMember(e.target.value)}
-                                    className="member-dropdown"
-                                >
-                                    <option value="">Select a member</option>
-                                    {allUsers
-                                        .filter((user) => !members.includes(user.email))
-                                        .map((user) => (
-                                            <option key={user.id} value={user.email}>
-                                                {user.email}
-                                            </option>
-                                        ))}
-                                </select>
-                                <button className="add-member-btn" onClick={addMember}>
-                                    Add Member
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <button className="back-btn" onClick={BackToDashboard}>
-                        Go back to Dashboard
-                    </button>
-                </div>
-            </div>
-
-            {/* middle is chat */}
-            <div className="channel-chat-column">
-                <div className="chat-area">
-                    <ul className="scrollable-content chat-window">
-                        {messages.map((msg, index) => (
-                            <li
-                                key={index}
-                                onContextMenu={(e) => handleOnContextMenu(e, msg)}
-                                className={`message ${msg.selected ? "selected" : ""}`}
-                            >
-                                <strong>{msg.senderUsername}</strong>
-                               <t style={{'font-size':'13px'}}> {formatMessageTime(msg.timestamp)}</t>
-                                <div >{msg.text}</div>
-                                {msg.quotedMessage && (
-                                    <div className="reply-message">
-                                        <strong>Replying to {msg.quotedMessage.senderUsername}</strong>
-                                        <div> {msg.quotedMessage.text}</div>
-                                    </div>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-
-                    {quotedMessage && (
-                        <div className="reply-message-preview">
-                            <p>
-                                <strong>Replying to</strong>
-                                <div>
-                                    {quotedMessage.sender}: {quotedMessage.text}
-                                </div>
-                            </p>
-                            <button
-                                style = {{background: '#e8acac'}}
-                                onClick={() => setQuotedMessage(null)}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    )}
-                    {newMessageNotification.show && (
-                        <div
-                            className="new-message-notification"
-                            onClick={() => {
-                                setNewMessageNotification({ show: false, count: 0 });
-                            }}
-                        >
-                            {newMessageNotification.count} new message(s) ↓
-                        </div>
-                    )}
-                    <div className="message-input-container">
-                        <input
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Type a message..."
-                            className="message-input"
-                        />
-                        <button className="send-btn" onClick={sendMessage}>
-                            Send
-                        </button>
-                    </div>
-
-
-                    <div ref={chatEndRef}></div>
-                </div>
-            </div>
-            {/* on the right is the membersl */}
-            <div className="channel-members-column">
-                <div className="members-section">
-                    <h2>Members</h2>
-                    <ul className="scrollable-content members-list">
-                        {membersWithStatus.map((member, index) => (
-                            <div key={index} className="member-card">
-                <span
-                    className={`status-indicator ${
-                        isOnline(member.status) ? "status-online" : "status-offline"
-                    }`}
-                ></span>
-                                <div className="user-info">
-                                    <span className="username">{member.displayName}</span>
-                                    {/*<span className="user-role">{user.role}</span>*/}
-                                </div>
-                                <div className="user-status">
-                                    {isOnline(member.status)
-                                        ? "Online"
-                                        : formatLastSeen(member.lastSeen, member.status)}
-                                </div>
-                            </div>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-
-            {/* Context Menu (no changes needed here) */}
-            <ContextMenu
-                contextMenuRef={contextMenuRef}
-                isToggled={contextMenu.toggled}
-                positionX={contextMenu.position.x}
-                positionY={contextMenu.position.y}
-                buttons={[
-                    {
-                        text: "Reply",
-                        icon: "",
-                        onClick: () => {
-                            setQuotedMessage({
-                                sender: contextMenu.message.sender,
-                                senderUsername: contextMenu.message.senderUsername,
-                                text: contextMenu.message.text
-                            });
-                            resetContextMenu();
-                        },
-                        isSpacer: false,
-                    },
-                    {
-                        text: "Delete Message",
-                        icon: "",
-                        onClick: () => {
-                            DeleteMessage(contextMenu.message).then(() => resetContextMenu());
-                        },
-                        isSpacer: false,
-                        show: admin,
-                    },
-                ]}
-            />
-        </div>
+  // Get messages and include displayName
+  const getMessages = async () => {
+    const userMap = await fetchUserDisplayNames();
+    const sorter = query(
+      collection(db, "privateChannels", channel.id, "messages"),
+      orderBy("timestamp")
     );
+    onSnapshot(sorter, (snapshot) => {
+      const messagesData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          displayName: userMap[data.sender] || data.sender,
+        };
+      });
+      setMessages(messagesData);
+    });
+  };
+
+  // Send message, including the quoted message if present
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    await addDoc(collection(db, "privateChannels", channel.id, "messages"), {
+      text: newMessage,
+      sender: auth.currentUser.email,
+      timestamp: serverTimestamp(),
+      quotedMessage: quotedMessage
+        ? {
+            sender: quotedMessage.sender,
+            text: quotedMessage.text,
+          }
+        : null,
+    });
+
+    setNewMessage("");
+    setQuotedMessage(null);
+  };
+
+  // Handle quoting a message
+  const handleQuoteMessage = (message) => {
+    setQuotedMessage(message);
+  };
+
+  // Leave channel
+  const leaveChannel = async () => {
+    const confirm = window.confirm(
+      "Do you want to leave this channel? This action cannot be undone."
+    );
+    if (!confirm) return;
+    await updateDoc(doc(db, "privateChannels", channel.id), {
+      members: arrayRemove(user.email),
+    });
+    navigate("/Dashboard");
+  };
+
+  // Handle right-click on a message
+  const handleOnContextMenu = (e, message) => {
+    e.preventDefault();
+    setContextMenu({
+      position: { x: e.clientX, y: e.clientY },
+      toggled: true,
+      message,
+    });
+
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => ({
+        ...msg,
+        selected: msg.id === message.id,
+      }))
+    );
+  };
+
+  // Close the context menu when clicking outside
+  const handleClickOutside = (e) => {
+    if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+      setContextMenu((prev) => ({ ...prev, toggled: false }));
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) => ({ ...msg, selected: false }))
+      );
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("User:", user);
+    if (!user) {
+      console.error("User is not authenticated.");
+      return;
+    }
+    fetchChannelData(channel.id, user, setAdmin, setMembers, setOwnerEmail, setRequests, setOwner);
+    fetchAllUsers(setAllUsers);
+    getMessages();
+    fetchOnlineUsers(setOnlineUsers); // Fetch online users when the component mounts
+  }, [user]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Fetch user display names when the component mounts
+  useEffect(() => {
+    const fetchAndSetUserDisplayNames = async () => {
+      const displayNames = await fetchUserDisplayNames();
+      setUserDisplayNames(displayNames);
+    };
+    fetchAndSetUserDisplayNames();
+  }, []);
+
+  // Context menu buttons
+  const contextMenuButtons = [
+    {
+      text: "Reply",
+      icon: "💬",
+      onClick: () => {
+        console.log("Reply to message:", contextMenu.message);
+        handleQuoteMessage(contextMenu.message);
+      },
+    },
+    {
+      text: "Delete",
+      icon: "🗑️",
+      show: admin || owner,
+      onClick: () => {
+        console.log("Delete message:", contextMenu.message);
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== contextMenu.message.id)
+        );
+      },
+    },
+  ];
+
+  // Function to toggle the sidebar
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  return (
+    <div
+      className="columns is-gapless"
+      style={{
+        height: "100vh", // Ensure the container takes the full viewport height
+        display: "flex",
+        flexDirection: "column", // Make the layout column-based
+      }}
+    >
+      {/* Navbar */}
+      <nav className="navbar is-link is-fixed-top">
+        <div className="navbar-brand">
+          <div className="navbar-item">
+            <span className="icon" style={{ marginRight: "8px", fontSize: "1.5rem" }}>
+              {channel.isDefault ? (
+                <i className="fas fa-globe"></i> // Font Awesome Globe icon for public channels
+              ) : (
+                <i className="fas fa-lock"></i> // Font Awesome Lock icon for private channels
+              )}
+            </span>
+            <h1 className="title is-4 has-text-white">Channel</h1>
+          </div>
+        </div>
+
+        <div className="navbar-menu">
+          <div className="navbar-start">
+            <div className="navbar-item">
+              <button
+                className="button is-info is-medium"
+                onClick={() => navigate("/dashboard")}
+              >
+                <span className="icon">
+                  <i className="fas fa-arrow-left"></i>
+                </span>
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="navbar-end">
+            <div className="navbar-item has-dropdown is-hoverable">
+              <div className="navbar-link is-flex is-align-items-center">
+                <figure className="image is-32x32 mr-2">
+                  <div
+                    className="is-rounded has-background-info has-text-white is-flex is-justify-content-center is-align-items-center"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </div>
+                </figure>
+                <span>{user?.email}</span>
+                {admin && <span className="tag ml-2">Admin</span>}
+              </div>
+              <div className="navbar-dropdown">
+                <a className="navbar-item" onClick={() => navigate("/profile")}>
+                  <span className="icon">
+                    <i className="fas fa-user"></i>
+                  </span>
+                  <span>Profile</span>
+                </a>
+                <a className="navbar-item" onClick={() => navigate("/friends")}>
+                  <span className="icon">
+                    <i className="fas fa-users"></i>
+                  </span>
+                  <span>Friends</span>
+                </a>
+                <hr className="navbar-divider" />
+                <a
+                  className="navbar-item"
+                  onClick={async () => {
+                    await updateDoc(doc(db, "users", user.uid), {
+                      status: "inactive",
+                      lastSeen: serverTimestamp(),
+                    });
+                    await auth.signOut();
+                    navigate("/");
+                  }}
+                >
+                  <span className="icon">
+                    <i className="fas fa-sign-out-alt"></i>
+                  </span>
+                  <span>Logout</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div
+        style={{
+          flex: 1, // Allow the main content to take the remaining space
+          display: "flex",
+          overflow: "hidden", // Prevent scrolling for the entire layout
+          marginTop: "3rem", // Add margin to push content below the navbar
+        }}
+      >
+        {/* Left Sidebar */}
+        <div
+          className="column is-one-quarter p-4 has-background-light"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            overflowY: "auto", // Allow scrolling within the sidebar if content overflows
+            marginTop: "1rem", // Add margin to avoid overlap with navbar
+          }}
+        >
+          <div>
+            <h1 className="title is-4" style={{ display: "flex", alignItems: "center" }}>
+              <span className="icon" style={{ marginRight: "8px" }}>
+                <i className="fas fa-comments"></i> {/* Generic chat icon for any channel */}
+              </span>
+              {channel.name}
+            </h1>
+            <p className="subtitle is-6 mt-3">
+              <strong>Channel Owner:</strong> {channel.isDefault ? "Public" : ownerEmail}
+            </p>
+            <hr style={{ borderColor: "black", border: "inset" }} /> {/* Horizontal line styled as black */}
+            {(owner || admin) && requests.length > 0 && (
+              <RequestsList
+                requests={requests}
+                AcceptRequest={(requester) => handleRequest(requester, "accept")}
+                DeleteRequest={(requester) => handleRequest(requester, "reject")}
+              />
+            )}
+          </div>
+          <div style={{ marginTop: "auto" }}>
+            {!admin && !channel.isDefault && (
+              <button
+                className="button is-danger is-fullwidth"
+                onClick={leaveChannel}
+              >
+                <span className="icon">
+                  <i className="fas fa-sign-out-alt"></i> {/* Font Awesome icon for leaving */}
+                </span>
+                <span>Leave Channel</span>
+              </button>
+            )}
+                     </div>
+        </div>
+
+        {/* Chat Area */}
+        <div
+          className={`column ${isSidebarOpen ? "is-two-quarters" : "is-three-quarters"} p-4`}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%", // Extend to the full height of the page
+            overflowY: "hidden", // Prevent scrolling for the entire chat area
+          }}
+        >
+          <div
+            className="box"
+            style={{
+              flex: "1",
+              overflowY: "auto", // Allow scrolling within the chat messages
+              borderRadius: "12px",
+              padding: "1rem",
+              marginBottom: "0.5rem",
+              marginTop: "0.5rem",
+              backgroundColor: "#f9f9f9",
+            }}
+            ref={chatContainerRef}
+          >
+            <ul>
+              {messages.map((msg, index) => (
+                <li
+                  key={index}
+                  onContextMenu={(e) => handleOnContextMenu(e, msg)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: msg.sender === user.email ? "flex-end" : "flex-start", // Align based on sender
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      maxWidth: "60%", // Set a maximum width for the wrapper
+                      wordWrap: "break-word",
+                    }}
+                  >
+                    {msg.quotedMessage && (
+                      <div
+                        style={{
+                          backgroundColor: "rgba(128, 128, 128, 0.2)", // Slightly transparent grey
+                          borderLeft: "4px solid #3273dc",
+                          padding: "0.5rem",
+                          fontSize: "0.9rem",
+                          color: "#555",
+                          borderRadius: "8px 8px 0 0", // Rounded corners only at the top
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        <p style={{ margin: 0 }}>
+                          <strong>In reply to:</strong> {userDisplayNames[msg.quotedMessage.sender] || msg.quotedMessage.sender}: {msg.quotedMessage.text}
+                        </p>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        backgroundColor: msg.sender === user.email ? "#3273dc" : "#f0f0f0", // Blue for sender, gray for receiver
+                        color: msg.sender === user.email ? "#fff" : "#000", // White text for sender, black for receiver
+                        padding: "0.75rem",
+                        borderRadius: msg.quotedMessage ? "0 0 12px 12px" : "12px", // Rounded corners only at the bottom if quoted
+                        wordWrap: "break-word",
+                        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <p style={{ margin: 0 }}>
+                        <strong>{userDisplayNames[msg.sender] || msg.sender}:</strong> {msg.text}
+                      </p>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: msg.sender === user.email ? "#d0d0d0" : "#888",
+                          display: "block",
+                          marginTop: "0.5rem",
+                          textAlign: msg.sender === user.email ? "right" : "left", // Align timestamp based on sender
+                        }}
+                      >
+                        {msg.timestamp
+                          ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Just now"}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div
+            className="field has-addons"
+            style={{
+              marginTop: "auto", // Push the message box to the bottom
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            {quotedMessage && (
+              <div className="box mb-2" style={{ backgroundColor: "#f0f0f0" }}>
+                <p>
+                  <strong>{quotedMessage.sender}:</strong> {quotedMessage.text}
+                </p>
+                <button
+                  className="delete"
+                  onClick={() => setQuotedMessage(null)}
+                  style={{ float: "right" }}
+                ></button>
+              </div>
+            )}
+            <div className="control is-expanded">
+              <input
+                className="input"
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage();
+                }}
+              />
+            </div>
+            <div className="control">
+              <button className="button is-link" onClick={sendMessage}>
+                <span className="icon">
+                  <i className="fas fa-paper-plane"></i> {/* Font Awesome icon for sending */}
+                </span>
+                <span>Send</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Collapsible Right Sidebar */}
+        {isSidebarOpen && (
+          <div
+            className="column is-one-quarter p-4 has-background-light"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              borderLeft: "1px solid #ddd",
+              right: "10px",
+              overflowY: "auto", // Allow scrolling within the sidebar if content overflows
+              marginTop: "1rem", // Add margin to avoid overlap with navbar
+            }}
+          >
+            {/* Channel Members List */}
+            <div className="mt-4">
+              <h3 className="title is-5">Channel Members</h3>
+              <ul>
+                {members.map((member, index) => {
+                  const memberData = allUsers.find((user) => user.email === member); // Find the user data from allUsers
+                  const isOnline = memberData?.status === "active"; // Check if the status is "active"
+                  const displayName = memberData?.displayName || member; // Fallback to email if displayName is not found
+
+                  return (
+                    <li key={index} className="mb-2" style={{ display: "flex", alignItems: "center" }}>
+                      <span
+                        style={{
+                          width: "10px",
+                          height: "10px",
+                          borderRadius: "50%",
+                          backgroundColor: isOnline ? "green" : "red", // Green for active, red for inactive
+                          display: "inline-block",
+                          marginRight: "8px",
+                          marginLeft: "8px",
+                        }}
+                      ></span>
+                      {displayName}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+                {/* Add Member Form */}
+            {(owner || admin) && (
+              <AddMemberForm
+                allUsers={allUsers}
+                members={members}
+                selectedMember={selectedMember}
+                setSelectedMember={setSelectedMember}
+                addMember={addMember}
+              />
+            )}
+            {/* <button
+              className="button is-danger mt-auto"
+              onClick={toggleSidebar}
+            >
+              Close Sidebar
+            </button> */}
+          </div>
+        )}
+      </div>
+
+      {/* Toggle Sidebar Button */}
+      {!channel.isDefault && (
+        <button
+          className={`button ${!isSidebarOpen ? "is-primary" : "is-danger"}`}
+          style={{
+            position: "absolute",
+            top: "5rem", // Adjust position to avoid overlap with navbar
+            right: "10px",
+            zIndex: 1000,
+            borderRadius: "50%", // Make the button circular
+            width: "3rem", // Set width for the circular button
+            height: "3rem", // Set height for the circular button
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onClick={toggleSidebar}
+        >
+          <span className="icon">
+            <i className={`fas ${!isSidebarOpen ? "fa-users" : "fa-times"}`}></i> {/* Font Awesome icons */}
+          </span>
+        </button>
+      )}
+
+      {/* Context Menu */}
+      <ContextMenu
+        position={contextMenu.position}
+        isToggled={contextMenu.toggled}
+        buttons={contextMenuButtons}
+        contextMenuRef={contextMenuRef}
+        closeMenu={() => setContextMenu((prev) => ({ ...prev, toggled: false }))}
+      />
+    </div>
+  );
 };
 
 export default Channel;

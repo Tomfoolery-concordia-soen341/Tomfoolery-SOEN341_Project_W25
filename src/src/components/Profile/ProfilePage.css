@@ -1,0 +1,44 @@
+.profile-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    overflow: scroll;
+    height: 100vh;
+}
+
+.profile-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.profile-section h2 {
+    margin-top: 0;
+}
+
+.profile-section input {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.profile-section button {
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.error {
+    color: red;
+}
+
+.success {
+    color: green;
+}

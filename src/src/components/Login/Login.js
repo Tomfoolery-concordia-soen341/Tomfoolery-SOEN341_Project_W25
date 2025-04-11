@@ -39,6 +39,9 @@ const Login = () => {
     navigate("/register");
   };
 
+  const GoToOffLineFriendList = () => {
+    navigate("/OffLineFriendList");
+  };
 
   return (
     <div
@@ -50,37 +53,6 @@ const Login = () => {
         alignItems: "center",
       }}
     >
-        {/* Fancy CHAT HAVEN heading */}
-        <div style={{
-            marginBottom: "2rem",
-            marginRight: "10rem",
-            textAlign: "center",
-        }}>
-            <h1 style={{
-                fontSize: "3.5rem",
-                fontWeight: "bold",
-                background: "linear-gradient(45deg, #3273dc, #00d1b2, #ff3860, #ffdd57)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                animation: "gradient 8s ease infinite",
-                backgroundSize: "300% 300%",
-                margin: 0,
-                lineHeight: 1.2,
-                textShadow: "2px 2px 4px rgba(0,0,0,0.1)",
-                fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                letterSpacing: "1px"
-            }}>
-                CHAT HAVEN
-            </h1>
-            <p style={{
-                color: "#4a4a4a",
-                fontStyle: "italic",
-                marginTop: "0.5rem"
-            }}>
-                A Seamless Communication Application by Tomfoolery
-            </p>
-        </div>
       <div
         style={{
           backgroundColor: "#ffffff",
@@ -164,6 +136,20 @@ const Login = () => {
           Create an account?{" "}
           <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
             Register here
+          </span>
+        </h1>
+        <h1
+          onClick={GoToOffLineFriendList}
+          style={{
+            color: "#3273dc",
+            textAlign: "center",
+            marginTop: "1rem",
+            cursor: "pointer",
+          }}
+        >
+          Send Messages Offline?{" "}
+          <span style={{ fontWeight: "bold", textDecoration: "underline" }}>
+            Click here
           </span>
         </h1>
       </div>
