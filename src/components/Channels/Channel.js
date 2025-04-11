@@ -337,267 +337,372 @@ const Channel = () => {
   return (
     <div
       className="columns is-gapless"
-      style={{ height: "100vh", gap: "0.5rem" }}
+      style={{
+        height: "100vh", // Ensure the container takes the full viewport height
+        display: "flex",
+        flexDirection: "column", // Make the layout column-based
+      }}
     >
-      {/* Left Sidebar */}
-      <div
-        className="column is-one-quarter p-4 has-background-light"
-        style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}
-      >
-        <div>
-          <h1 className="title is-4" style={{ display: "flex", alignItems: "center" }}>
-            {channel.isDefault ? (
-              <span className="icon" style={{ marginRight: "8px" }}>
-                <i className="fas fa-globe"></i> {/* Font Awesome Globe icon for public channels */}
-              </span>
-            ) : (
-              <span className="icon" style={{ marginRight: "8px" }}>
-                <i className="fas fa-lock"></i> {/* Font Awesome Lock icon for private channels */}
-              </span>
-            )}
-            {channel.name}
-          </h1>
-          <p className="subtitle is-6 mt-3">
-            <strong>Channel Owner:</strong> {channel.isDefault ? "Public" : ownerEmail}
-          </p>
-          <hr style={{ borderColor: "black", border: "inset" }} /> {/* Horizontal line styled as black */}
-          {(owner || admin) && requests.length > 0 && (
-            <RequestsList
-              requests={requests}
-              AcceptRequest={(requester) => handleRequest(requester, "accept")}
-              DeleteRequest={(requester) => handleRequest(requester, "reject")}
-            />
-          )}
-        </div>
-        <div style={{ marginTop: "auto" }}>
-          {!admin && !channel.isDefault && (
-            <button
-              className="button is-danger is-fullwidth mb-2"
-              onClick={leaveChannel}
-            >
-              <span className="icon">
-                <i className="fas fa-sign-out-alt"></i> {/* Font Awesome icon for leaving */}
-              </span>
-              <span>Leave Channel</span>
-            </button>
-          )}
-          <button
-            className="button is-link is-fullwidth"
-            onClick={() => navigate("/Dashboard")}
-          >
-            <span className="icon">
-              <i className="fas fa-arrow-left"></i> {/* Font Awesome icon for back */}
+      {/* Navbar */}
+      <nav className="navbar is-link is-fixed-top">
+        <div className="navbar-brand">
+          <div className="navbar-item">
+            <span className="icon" style={{ marginRight: "8px", fontSize: "1.5rem" }}>
+              {channel.isDefault ? (
+                <i className="fas fa-globe"></i> // Font Awesome Globe icon for public channels
+              ) : (
+                <i className="fas fa-lock"></i> // Font Awesome Lock icon for private channels
+              )}
             </span>
-            <span>Back to Dashboard</span>
-          </button>
+            <h1 className="title is-4 has-text-white">Channel</h1>
+          </div>
         </div>
-      </div>
 
-      {/* Chat Area */}
-      <div
-        className={`column ${isSidebarOpen ? "is-two-quarters" : "is-three-quarters"} p-4`}
-        style={{ display: "flex", flexDirection: "column", height: "100%" }}
-      >
-        <div
-          className="box"
-          style={{
-            flex: "1",
-            overflowY: "auto",
-            borderRadius: "12px",
-            padding: "1rem",
-            marginBottom: "0.5rem",
-            marginTop: "0.5rem",
-            backgroundColor: "#f9f9f9",
-          }}
-          ref={chatContainerRef}
-        >
-          <ul>
-            {messages.map((msg, index) => (
-              <li
-                key={index}
-                onContextMenu={(e) => handleOnContextMenu(e, msg)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: msg.sender === user.email ? "flex-end" : "flex-start", // Align based on sender
-                  marginBottom: "0.5rem",
-                }}
+        <div className="navbar-menu">
+          <div className="navbar-start">
+            <div className="navbar-item">
+              <button
+                className="button is-info is-medium"
+                onClick={() => navigate("/dashboard")}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    maxWidth: "60%", // Set a maximum width for the wrapper
-                    wordWrap: "break-word",
-                  }}
-                >
-                  {msg.quotedMessage && (
-                    <div
-                      style={{
-                        backgroundColor: "rgba(128, 128, 128, 0.2)", // Slightly transparent grey
-                        borderLeft: "4px solid #3273dc",
-                        padding: "0.5rem",
-                        fontSize: "0.9rem",
-                        color: "#555",
-                        borderRadius: "8px 8px 0 0", // Rounded corners only at the top
-                        wordWrap: "break-word",
-                      }}
-                    >
-                      <p style={{ margin: 0 }}>
-                        <strong>In reply to:</strong> {userDisplayNames[msg.quotedMessage.sender] || msg.quotedMessage.sender}: {msg.quotedMessage.text}
-                      </p>
-                    </div>
-                  )}
+                <span className="icon">
+                  <i className="fas fa-arrow-left"></i>
+                </span>
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="navbar-end">
+            <div className="navbar-item has-dropdown is-hoverable">
+              <div className="navbar-link is-flex is-align-items-center">
+                <figure className="image is-32x32 mr-2">
                   <div
+                    className="is-rounded has-background-info has-text-white is-flex is-justify-content-center is-align-items-center"
                     style={{
-                      backgroundColor: msg.sender === user.email ? "#3273dc" : "#f0f0f0", // Blue for sender, gray for receiver
-                      color: msg.sender === user.email ? "#fff" : "#000", // White text for sender, black for receiver
-                      padding: "0.75rem",
-                      borderRadius: msg.quotedMessage ? "0 0 12px 12px" : "12px", // Rounded corners only at the bottom if quoted
-                      wordWrap: "break-word",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
                     }}
                   >
-                    <p style={{ margin: 0 }}>
-                      <strong>{userDisplayNames[msg.sender] || msg.sender}:</strong> {msg.text}
-                    </p>
-                    <span
-                      style={{
-                        fontSize: "0.8rem",
-                        color: msg.sender === user.email ? "#d0d0d0" : "#888",
-                        display: "block",
-                        marginTop: "0.5rem",
-                        textAlign: msg.sender === user.email ? "right" : "left", // Align timestamp based on sender
-                      }}
-                    >
-                      {msg.timestamp
-                        ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Just now"}
-                    </span>
+                    {user?.email?.charAt(0).toUpperCase()}
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="field has-addons">
-          {quotedMessage && (
-            <div className="box mb-2" style={{ backgroundColor: "#f0f0f0" }}>
-              <p>
-                <strong>{quotedMessage.sender}:</strong> {quotedMessage.text}
-              </p>
-              <button
-                className="delete"
-                onClick={() => setQuotedMessage(null)}
-                style={{ float: "right" }}
-              ></button>
+                </figure>
+                <span>{user?.email}</span>
+                {admin && <span className="tag ml-2">Admin</span>}
+              </div>
+              <div className="navbar-dropdown">
+                <a className="navbar-item" onClick={() => navigate("/profile")}>
+                  <span className="icon">
+                    <i className="fas fa-user"></i>
+                  </span>
+                  <span>Profile</span>
+                </a>
+                <a className="navbar-item" onClick={() => navigate("/friends")}>
+                  <span className="icon">
+                    <i className="fas fa-users"></i>
+                  </span>
+                  <span>Friends</span>
+                </a>
+                <hr className="navbar-divider" />
+                <a
+                  className="navbar-item"
+                  onClick={async () => {
+                    await updateDoc(doc(db, "users", user.uid), {
+                      status: "inactive",
+                      lastSeen: serverTimestamp(),
+                    });
+                    await auth.signOut();
+                    navigate("/");
+                  }}
+                >
+                  <span className="icon">
+                    <i className="fas fa-sign-out-alt"></i>
+                  </span>
+                  <span>Logout</span>
+                </a>
+              </div>
             </div>
-          )}
-          <div className="control is-expanded">
-            <input
-              className="input"
-              type="text"
-              placeholder="Type a message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
-              }}
-            />
-          </div>
-          <div className="control">
-            <button className="button is-link" onClick={sendMessage}>
-              <span className="icon">
-                <i className="fas fa-paper-plane"></i> {/* Font Awesome icon for sending */}
-              </span>
-              <span>Send</span>
-            </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Collapsible Right Sidebar */}
-      {isSidebarOpen && (
+      {/* Main Content */}
+      <div
+        style={{
+          flex: 1, // Allow the main content to take the remaining space
+          display: "flex",
+          overflow: "hidden", // Prevent scrolling for the entire layout
+          marginTop: "3rem", // Add margin to push content below the navbar
+        }}
+      >
+        {/* Left Sidebar */}
         <div
           className="column is-one-quarter p-4 has-background-light"
           style={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            borderLeft: "1px solid #ddd",
+            overflowY: "auto", // Allow scrolling within the sidebar if content overflows
+            marginTop: "1rem", // Add margin to avoid overlap with navbar
           }}
         >
-          {/* Channel Members List */}
-          <div className="mt-4">
-            <h3 className="title is-5">Channel Members</h3>
-            <ul>
-              {members.map((member, index) => {
-                const memberData = allUsers.find((user) => user.email === member); // Find the user data from allUsers
-                const isOnline = memberData?.status === "active"; // Check if the status is "active"
-                const displayName = memberData?.displayName || member; // Fallback to email if displayName is not found
+          <div>
+            <h1 className="title is-4" style={{ display: "flex", alignItems: "center" }}>
+              <span className="icon" style={{ marginRight: "8px" }}>
+                <i className="fas fa-comments"></i> {/* Generic chat icon for any channel */}
+              </span>
+              {channel.name}
+            </h1>
+            <p className="subtitle is-6 mt-3">
+              <strong>Channel Owner:</strong> {channel.isDefault ? "Public" : ownerEmail}
+            </p>
+            <hr style={{ borderColor: "black", border: "inset" }} /> {/* Horizontal line styled as black */}
+            {(owner || admin) && requests.length > 0 && (
+              <RequestsList
+                requests={requests}
+                AcceptRequest={(requester) => handleRequest(requester, "accept")}
+                DeleteRequest={(requester) => handleRequest(requester, "reject")}
+              />
+            )}
+          </div>
+          <div style={{ marginTop: "auto" }}>
+            {!admin && !channel.isDefault && (
+              <button
+                className="button is-danger is-fullwidth"
+                onClick={leaveChannel}
+              >
+                <span className="icon">
+                  <i className="fas fa-sign-out-alt"></i> {/* Font Awesome icon for leaving */}
+                </span>
+                <span>Leave Channel</span>
+              </button>
+            )}
+                     </div>
+        </div>
 
-                return (
-                  <li key={index} className="mb-2" style={{ display: "flex", alignItems: "center" }}>
-                    <span
+        {/* Chat Area */}
+        <div
+          className={`column ${isSidebarOpen ? "is-two-quarters" : "is-three-quarters"} p-4`}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%", // Extend to the full height of the page
+            overflowY: "hidden", // Prevent scrolling for the entire chat area
+          }}
+        >
+          <div
+            className="box"
+            style={{
+              flex: "1",
+              overflowY: "auto", // Allow scrolling within the chat messages
+              borderRadius: "12px",
+              padding: "1rem",
+              marginBottom: "0.5rem",
+              marginTop: "0.5rem",
+              backgroundColor: "#f9f9f9",
+            }}
+            ref={chatContainerRef}
+          >
+            <ul>
+              {messages.map((msg, index) => (
+                <li
+                  key={index}
+                  onContextMenu={(e) => handleOnContextMenu(e, msg)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: msg.sender === user.email ? "flex-end" : "flex-start", // Align based on sender
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      maxWidth: "60%", // Set a maximum width for the wrapper
+                      wordWrap: "break-word",
+                    }}
+                  >
+                    {msg.quotedMessage && (
+                      <div
+                        style={{
+                          backgroundColor: "rgba(128, 128, 128, 0.2)", // Slightly transparent grey
+                          borderLeft: "4px solid #3273dc",
+                          padding: "0.5rem",
+                          fontSize: "0.9rem",
+                          color: "#555",
+                          borderRadius: "8px 8px 0 0", // Rounded corners only at the top
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        <p style={{ margin: 0 }}>
+                          <strong>In reply to:</strong> {userDisplayNames[msg.quotedMessage.sender] || msg.quotedMessage.sender}: {msg.quotedMessage.text}
+                        </p>
+                      </div>
+                    )}
+                    <div
                       style={{
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        backgroundColor: isOnline ? "green" : "red", // Green for active, red for inactive
-                        display: "inline-block",
-                        marginRight: "8px",
-                        marginLeft: "8px",
+                        backgroundColor: msg.sender === user.email ? "#3273dc" : "#f0f0f0", // Blue for sender, gray for receiver
+                        color: msg.sender === user.email ? "#fff" : "#000", // White text for sender, black for receiver
+                        padding: "0.75rem",
+                        borderRadius: msg.quotedMessage ? "0 0 12px 12px" : "12px", // Rounded corners only at the bottom if quoted
+                        wordWrap: "break-word",
+                        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                       }}
-                    ></span>
-                    {displayName}
-                  </li>
-                );
-              })}
+                    >
+                      <p style={{ margin: 0 }}>
+                        <strong>{userDisplayNames[msg.sender] || msg.sender}:</strong> {msg.text}
+                      </p>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: msg.sender === user.email ? "#d0d0d0" : "#888",
+                          display: "block",
+                          marginTop: "0.5rem",
+                          textAlign: msg.sender === user.email ? "right" : "left", // Align timestamp based on sender
+                        }}
+                      >
+                        {msg.timestamp
+                          ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Just now"}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
-              {/* Add Member Form */}
-          {(owner || admin) && (
-            <AddMemberForm
-              allUsers={allUsers}
-              members={members}
-              selectedMember={selectedMember}
-              setSelectedMember={setSelectedMember}
-              addMember={addMember}
-            />
-          )}
-          {/* <button
-            className="button is-danger mt-auto"
-            onClick={toggleSidebar}
+          <div
+            className="field has-addons"
+            style={{
+              marginTop: "auto", // Push the message box to the bottom
+              backgroundColor: "#f9f9f9",
+            }}
           >
-            Close Sidebar
-          </button> */}
+            {quotedMessage && (
+              <div className="box mb-2" style={{ backgroundColor: "#f0f0f0" }}>
+                <p>
+                  <strong>{quotedMessage.sender}:</strong> {quotedMessage.text}
+                </p>
+                <button
+                  className="delete"
+                  onClick={() => setQuotedMessage(null)}
+                  style={{ float: "right" }}
+                ></button>
+              </div>
+            )}
+            <div className="control is-expanded">
+              <input
+                className="input"
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage();
+                }}
+              />
+            </div>
+            <div className="control">
+              <button className="button is-link" onClick={sendMessage}>
+                <span className="icon">
+                  <i className="fas fa-paper-plane"></i> {/* Font Awesome icon for sending */}
+                </span>
+                <span>Send</span>
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Collapsible Right Sidebar */}
+        {isSidebarOpen && (
+          <div
+            className="column is-one-quarter p-4 has-background-light"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              borderLeft: "1px solid #ddd",
+              right: "10px",
+              overflowY: "auto", // Allow scrolling within the sidebar if content overflows
+              marginTop: "1rem", // Add margin to avoid overlap with navbar
+            }}
+          >
+            {/* Channel Members List */}
+            <div className="mt-4">
+              <h3 className="title is-5">Channel Members</h3>
+              <ul>
+                {members.map((member, index) => {
+                  const memberData = allUsers.find((user) => user.email === member); // Find the user data from allUsers
+                  const isOnline = memberData?.status === "active"; // Check if the status is "active"
+                  const displayName = memberData?.displayName || member; // Fallback to email if displayName is not found
+
+                  return (
+                    <li key={index} className="mb-2" style={{ display: "flex", alignItems: "center" }}>
+                      <span
+                        style={{
+                          width: "10px",
+                          height: "10px",
+                          borderRadius: "50%",
+                          backgroundColor: isOnline ? "green" : "red", // Green for active, red for inactive
+                          display: "inline-block",
+                          marginRight: "8px",
+                          marginLeft: "8px",
+                        }}
+                      ></span>
+                      {displayName}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+                {/* Add Member Form */}
+            {(owner || admin) && (
+              <AddMemberForm
+                allUsers={allUsers}
+                members={members}
+                selectedMember={selectedMember}
+                setSelectedMember={setSelectedMember}
+                addMember={addMember}
+              />
+            )}
+            {/* <button
+              className="button is-danger mt-auto"
+              onClick={toggleSidebar}
+            >
+              Close Sidebar
+            </button> */}
+          </div>
+        )}
+      </div>
 
       {/* Toggle Sidebar Button */}
-      <button
-        className={`button ${!isSidebarOpen ? "is-primary" : "is-danger"}`}
-        style={{
-          position: "absolute",
-          top: "1rem",
-          right: "1rem",
-          zIndex: 1000,
-          borderRadius: "50%", // Make the button circular
-          width: "3rem", // Set width for the circular button
-          height: "3rem", // Set height for the circular button
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-        onClick={toggleSidebar}
-      >
-        <span className="icon">
-          <i className={`fas ${!isSidebarOpen ? "fa-users" : "fa-times"}`}></i> {/* Font Awesome icons */}
-        </span>
-      </button>
+      {!channel.isDefault && (
+        <button
+          className={`button ${!isSidebarOpen ? "is-primary" : "is-danger"}`}
+          style={{
+            position: "absolute",
+            top: "5rem", // Adjust position to avoid overlap with navbar
+            right: "10px",
+            zIndex: 1000,
+            borderRadius: "50%", // Make the button circular
+            width: "3rem", // Set width for the circular button
+            height: "3rem", // Set height for the circular button
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onClick={toggleSidebar}
+        >
+          <span className="icon">
+            <i className={`fas ${!isSidebarOpen ? "fa-users" : "fa-times"}`}></i> {/* Font Awesome icons */}
+          </span>
+        </button>
+      )}
 
       {/* Context Menu */}
       <ContextMenu
