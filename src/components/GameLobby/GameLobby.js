@@ -169,8 +169,8 @@ const GameLobby = () => {
       };
 
       await addDoc(collection(db, "gameRooms"), newRoom);
-      setShowCreateGameModal(false);
       setNewGameName("");
+      setShowCreatConnectFourModal(false); // Moved here to ensure it closes after the update
     } catch (error) {
       console.error("Error creating game room:", error);
     }
