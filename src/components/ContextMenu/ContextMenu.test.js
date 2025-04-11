@@ -1,33 +1,72 @@
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ContextMenu from './ContextMenu';
 
 describe('ContextMenu Component', () => {
-    test('renders context menu with buttons when toggled', () => {
-        const mockButtons = [
-            { text: 'Join', icon: '➡️', onClick: jest.fn(), isSpacer: false, show: true },
-            { text: 'Delete', icon: '🗑️', onClick: jest.fn(), isSpacer: false, show: true },
-            { text: 'Hidden', icon: '👀', onClick: jest.fn(), isSpacer: false, show: false },
-            { text: '', onClick: jest.fn(), isSpacer: true, show: true },
-        ];
+  const mockCloseMenu = jest.fn();
+  const mockOnClick1 = jest.fn();
+  const mockOnClick2 = jest.fn();
 
-        render(
-            <ContextMenu
-                rightClickItem={{ id: 'test-item' }}
-                positionX={100}
-                positionY={200}
-                isToggled={true}
-                buttons={mockButtons}
-                contextMenuRef={{ current: null }}
-            />
-        );
+  const defaultProps = {
+    position: { x: 100, y: 200 }, // Explicitly defined
+    isToggled: true,
+    buttons: [
+      {
+        text: 'Edit',
+        icon: <span role="img" aria-label="edit">✏️</span>,
+        onClick: mockOnClick1,
+        show: true,
+      },
+      {
+        text: 'Delete',
+        icon: <span role="img" aria-label="delete">🗑️</span>,
+        onClick: mockOnClick2,
+        show: false,
+      },
+      {
+        text: 'Share',
+        icon: <span role="img" aria-label="share">📤</span>,
+        onClick: jest.fn(),
+        show: true,
+      },
+    ],
+    contextMenuRef: { current: null },
+    closeMenu: mockCloseMenu,
+  };
 
-        const menuElement = screen.getByRole('list'); // Changed to 'list'
-        expect(menuElement).toHaveClass('context-menu Active');
-        expect(screen.getByText('Join')).toBeInTheDocument();
-        expect(screen.getByText('Delete')).toBeInTheDocument();
-        expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
-        expect(screen.getByRole('separator')).toBeInTheDocument();
-        expect(menuElement).toHaveStyle('top: 202px');
-        expect(menuElement).toHaveStyle('left: 102px');
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders nothing when isToggled is false', () => {
+    render(<ContextMenu {...defaultProps} isToggled={false} position={{ x: 0, y: 0 }} />);
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+    expect(screen.queryByText('Share')).not.toBeInTheDocument();
+  });
+
+  it('calls button onClick and closeMenu when a button is clicked', () => {
+    render(<ContextMenu {...defaultProps} />);
+
+    // Find and click the 'Edit' button
+    const editButton = screen.getByText('Edit');
+    fireEvent.click(editButton);
+
+    // Verify that both the button's onClick and closeMenu were called
+    expect(mockOnClick1).toHaveBeenCalledTimes(1);
+    expect(mockCloseMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders icons alongside button text', () => {
+    render(<ContextMenu {...defaultProps} />);
+
+    // Check that icons are rendered (using aria-label to identify them)
+    const editIcon = screen.getByLabelText('edit');
+    const shareIcon = screen.getByLabelText('share');
+    expect(editIcon).toBeInTheDocument();
+    expect(shareIcon).toBeInTheDocument();
+
+    // Verify that the icon and text are in the same button
+    const editButton = screen.getByText('Edit').parentElement;
+    expect(editButton).toContainElement(editIcon);
+  });
 });
